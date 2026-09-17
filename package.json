@@ -1,8 +1,8 @@
 {
   "name": "auto-parbauditajs",
-  "version": "4.5.9",
+  "version": "4.6.2",
   "private": true,
-  "description": "SS.COM used-car import + vehicle-specific purchase intelligence",
+  "description": "SS.COM used-car import + vehicle-specific pre-purchase inspection",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

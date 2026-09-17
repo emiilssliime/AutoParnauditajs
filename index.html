@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auto Pārbaudītājs — V4.6.1</title>
+<title>Auto Pārbaudītājs — V4.6.2</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f3f5f7;--card:#fff;--text:#18202a;--muted:#6b7280;--line:#e5e7eb;--dark:#111827;--green:#176b38;--greenbg:#eaf8ef;--amber:#8a5a00;--amberbg:#fff5d8;--red:#a12626;--redbg:#fff0f0;--blue:#245b9e;--bluebg:#edf5ff}
@@ -17,20 +17,23 @@ button.secondary{background:#eef1f4;color:#1f2937}.full{width:100%;margin-top:12
 .status{margin-top:12px;padding:12px;border-radius:12px;background:#f5f7f9;color:#4b5563}.status.ok{background:var(--greenbg);color:var(--green)}.status.err{background:var(--redbg);color:var(--red)}.status.work{background:var(--bluebg);color:var(--blue)}
 .data{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.metric{background:#f7f8fa;border-radius:14px;padding:13px;min-height:78px}.metric small{display:block;color:var(--muted);margin-bottom:5px}.metric b{font-size:17px;overflow-wrap:anywhere}
 section{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}.issue{border:1px solid var(--line);border-radius:15px;padding:15px;margin:10px 0;background:#fcfcfd}.issueTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.sev-high{background:#fde9e7;color:#8e1b1b}.sev-med{background:#fff5d8;color:#7c5400}.sev-low{background:#eef4ff;color:#245b9e}.conf-high{background:#e8f6ec;color:#176b38}.conf-med{background:#f2f3f5;color:#49515a}.conf-low{background:#f2f3f5;color:#6b7280}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.sev-high{background:#fde9e7;color:#8e1b1b}.sev-med{background:#fff5d8;color:#7c5400}.sev-low{background:#eef4ff;color:#245b9e}
 .source{padding:10px 0;border-bottom:1px solid #eee}.source:last-child{border-bottom:0}.source a{color:#174ea6;text-decoration:none;font-weight:650}.source small{display:block;color:var(--muted);margin-top:3px}
-ul{padding-left:22px;margin-bottom:0}li{margin:8px 0;line-height:1.45}.summary{background:#f7f8fa;border-radius:14px;padding:14px;line-height:1.5}
+.summary{background:#f7f8fa;border-radius:14px;padding:14px;line-height:1.5}
 .note{font-size:13px;color:var(--muted);line-height:1.45}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-@media(max-width:650px){.urlrow,.grid,.actions{grid-template-columns:1fr}.data{grid-template-columns:1fr 1fr}h1{font-size:26px}.issueTop{display:block}}
-@media print{body{background:#fff;padding:0}.card{box-shadow:none}.no-print{display:none}}
+.sheet{display:grid;gap:8px}.sheetRow{display:grid;grid-template-columns:24px minmax(120px,.7fr) 1.5fr;gap:10px;align-items:start;border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:#fff}
+.box{width:18px;height:18px;border:2px solid #9aa3ad;border-radius:4px;margin-top:1px;background:#fff}.sheetTitle{font-weight:750}.sheetText{color:#4b5563;line-height:1.4}
+.sectionHint{font-size:13px;color:var(--muted);margin:-4px 0 10px}.compactBtn{width:auto;padding:9px 12px;margin-top:10px}
+@media(max-width:650px){.urlrow,.grid,.actions{grid-template-columns:1fr}.data{grid-template-columns:1fr 1fr}h1{font-size:26px}.issueTop{display:block}.sheetRow{grid-template-columns:22px 1fr}.sheetText{grid-column:2}}
+@media print{body{background:#fff;padding:0}.card{box-shadow:none}.no-print{display:none}.sheetRow{break-inside:avoid}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-    <span class="badge">V4.6.1 • AUTO PĀRBAUDES PĀRSKATS</span>
+    <span class="badge">V4.6.2 • AUTO PĀRBAUDE</span>
     <h1>🚗 Auto Pārbaudītājs</h1>
-    <p class="sub">Ielīmē SS.COM sludinājuma saiti un saņem konkrētajam auto pielāgotu pirmspirkuma pārbaudes sarakstu.</p>
+    <p class="sub">Ielīmē SS.COM sludinājuma saiti. Auto dati un pārbaudes punkti tiek pielāgoti konkrētajam modelim, dzinējam, kārbai un nobraukumam.</p>
     <div class="urlrow">
       <input id="listingUrl" type="url" placeholder="https://www.ss.com/msg/lv/transport/cars/...">
       <button onclick="searchListing()">🔎 MEKLĒT AUTO</button>
@@ -63,7 +66,11 @@ const val=id=>$(id).value.trim();
 const vehicle=()=>({make:val("make"),model:val("model"),year:val("year"),engine:val("engine"),power:val("power"),gearbox:val("gearbox"),mileage:val("mileage"),price:val("price"),listingUrl:val("listingUrl")});
 const withUnit=(x,u)=>!x?"—":String(x).toLowerCase().includes(u.toLowerCase())?x:`${x} ${u}`;
 
-function fill(d){["make","model","year","engine","power","gearbox","mileage","price"].forEach(k=>{if(d[k]!==undefined&&d[k]!==null&&String(d[k]).trim()!=="")$(k).value=d[k]})}
+function fill(d){
+  ["make","model","year","engine","power","gearbox","mileage","price"].forEach(k=>{
+    if(d[k]!==undefined&&d[k]!==null&&String(d[k]).trim()!=="")$(k).value=d[k]
+  })
+}
 function setStatus(text,kind=""){$("status").className="status"+(kind?` ${kind}`:"");$("status").textContent=text}
 
 async function searchListing(){
@@ -76,11 +83,9 @@ async function searchListing(){
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||"Neizdevās nolasīt sludinājumu");
     fill(d);
-    setStatus("✓ Sludinājuma dati atrasti. Sagatavoju pārbaudes punktus…","ok");
+    setStatus("✓ Sludinājuma dati atrasti. Gatavoju pārbaudes plānu…","ok");
     await analyze();
-  }catch(e){
-    setStatus("Neizdevās importēt sludinājumu. Pārbaudi saiti un mēģini vēlreiz.","err");
-  }
+  }catch(e){setStatus("Neizdevās importēt: "+e.message,"err")}
 }
 
 function baseHtml(v){
@@ -93,7 +98,7 @@ function baseHtml(v){
     <div class="metric"><small>Nobraukums</small><b>${esc(withUnit(v.mileage,"km"))}</b></div>
     <div class="metric"><small>Cena</small><b>${v.price?`€${esc(v.price)}`:"—"}</b></div>
   </div>
-  <section><h2>🔎 Ko pārbaudīt šim auto</h2><div id="intelStatus" class="status work">Apkopoju pārbaudes punktus…</div><div id="intel"></div></section>`;
+  <section><h2>Auto pārbaudes plāns</h2><div id="intelStatus" class="status work">Apkopoju šim auto svarīgākos pārbaudes punktus…</div><div id="intel"></div></section>`;
 }
 
 async function analyze(){
@@ -108,18 +113,18 @@ async function analyze(){
     if(!r.ok) throw new Error(d.error||"Intelligence unavailable");
     renderIntel(d,v);
   }catch(e){
-    $("intelStatus").className="status ok";
-    $("intelStatus").textContent="✓ Pārbaudes saraksts gatavs.";
+    $("intelStatus").className="status";
+    $("intelStatus").textContent="Pārbaudes plāns sagatavots no auto datiem.";
     renderFallback(v);
   }
 }
 
 function issueHtml(i){
-  const sev=i.severity==="high"?"Svarīgi":i.severity==="low"?"Papildus":"Pārbaudi";
+  const sev=i.severity==="high"?"Svarīgi":i.severity==="low"?"Papildus":"Pārbaudīt";
   return `<div class="issue">
-    <div class="issueTop"><div><h3>${esc(i.title)}</h3>${i.reason?`<div class="muted">${esc(i.reason)}</div>`:""}</div></div>
-    <div class="tags"><span class="pill sev-${esc(i.severity||"med")}">${sev}</span>${i.sourceCount?`<span class="pill">Avoti: ${i.sourceCount}</span>`:""}</div>
-    ${i.check?`<div><b>Ko darīt:</b> ${esc(i.check)}</div>`:""}
+    <div class="issueTop"><div><h3>${esc(i.title)}</h3><div class="muted">${esc(i.reason||"")}</div></div></div>
+    <div class="tags"><span class="pill sev-${esc(i.severity||"med")}">${sev}</span>${i.sourceCount?`<span class="pill">${i.sourceCount} avoti</span>`:""}</div>
+    ${i.check?`<div><b>Pārbaude:</b> ${esc(i.check)}</div>`:""}
     ${i.symptoms?`<div style="margin-top:6px"><b>Pazīmes:</b> ${esc(i.symptoms)}</div>`:""}
   </div>`;
 }
@@ -128,35 +133,82 @@ function sourceHtml(s){
   return `<div class="source"><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title||s.domain||"Avots")}</a><small>${esc(s.domain||"")}${s.type?` • ${esc(s.type)}`:""}</small></div>`;
 }
 
+function sheetRow(title,text,extraClass=""){
+  return `<div class="sheetRow ${extraClass}"><span class="box"></span><div class="sheetTitle">${esc(title)}</div><div class="sheetText">${esc(text)}</div></div>`;
+}
+
+function sellerRow(text){
+  const parts=String(text||"").split(/\s+—\s+/);
+  const title=parts.shift()||"Pārdevējam";
+  const detail=parts.join(" — ")||"Noskaidrot pirms apskates.";
+  return sheetRow(title,detail);
+}
+
 function renderIntel(d,v){
   const st=$("intelStatus");
-  if(d.researchStatus==="live"){
+  if(d.researchStatus==="live" && d.sources?.length){
     st.className="status ok";
-    st.textContent=`✓ Pārbaudes saraksts gatavs — ${d.issues?.length||0} galvenie punkti.`;
+    st.textContent=`✓ Pārbaudes plāns gatavs. Papildus pārbaudīti ${d.sources.length} ārējie avoti.`;
   }else{
-    // Never expose API keys, Render, provider errors or backend state to customers.
     st.className="status ok";
-    st.textContent="✓ Pārbaudes saraksts gatavs.";
+    st.textContent="✓ Pārbaudes plāns gatavs.";
   }
 
   let html="";
-  if(d.fingerprint) html+=`<div class="summary"><b>Atpazītais auto:</b> ${esc(d.fingerprint)}</div>`;
-    html+=`<section><h2>⚠️ Biežāk pārbaudāmie mezgli</h2>${(d.issues||[]).map(issueHtml).join("")||"<p class='muted'>Papildu modelim raksturīgi punkti netika atrasti.</p>"}</section>`;
-  if(d.mileageChecks?.length) html+=`<section><h2>🛣️ Pie šī nobraukuma</h2><ul>${d.mileageChecks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>`;
-  if(d.sellerQuestions?.length) html+=`<section><h2>💬 Jautā pārdevējam</h2><ul id="sellerQ">${d.sellerQuestions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="secondary no-print" onclick="copyQuestions()">📋 KOPĒT JAUTĀJUMUS</button></section>`;
-  if(d.sources?.length) html+=`<section><h2>🔗 Avoti</h2><p class="note">Avotos minētās problēmas nav garantēts defekts konkrētajam auto. Tās izmanto kā pārbaudes punktus pirms pirkuma.</p>${d.sources.map(sourceHtml).join("")}</section>`;
-  html+=`<section><h2>🔧 Pirms pirkuma</h2><ul><li>OBD diagnostika un kļūdu/ready-status pārbaude.</li><li>Servisa vēstures, rēķinu un nobraukuma secības pārbaude.</li><li>Auksts starts un pilns testa brauciens.</li><li>Piekare, bremzes, riepas, apakša un virsbūves remonta pazīmes.</li><li>Ja ir šaubas — neatkarīga pirmspirkuma pārbaude servisā.</li></ul></section>`;
-  html+=`<div class="actions no-print"><button onclick="window.print()">📄 SAGLABĀT PDF</button><button class="secondary" onclick="analyze()">↻ ATJAUNOT ANALĪZI</button></div>`;
+  if(d.fingerprint) html+=`<div class="summary"><b>Auto:</b> ${esc(d.fingerprint)}</div>`;
+
+  html+=`<section><h2>⚠️ Tipiskie riski šim auto</h2>${(d.issues||[]).map(issueHtml).join("")||"<p class='muted'>Papildu modelim raksturīgi riski nav identificēti.</p>"}</section>`;
+
+  if(d.mileageChecks?.length){
+    html+=`<section><h2>🛣️ Pie šī nobraukuma</h2><div class="sheet">${d.mileageChecks.map((x,i)=>sheetRow(`Punkts ${i+1}`,x)).join("")}</div></section>`;
+  }
+
+  if(d.sellerQuestions?.length){
+    html+=`<section><h2>💬 Ko noskaidrot pie pārdevēja</h2>
+      <p class="sectionHint">Īsi punkti, ko izrunāt pirms braukt skatīties auto.</p>
+      <div id="sellerQ" class="sheet">${d.sellerQuestions.map(sellerRow).join("")}</div>
+      <button class="secondary compactBtn no-print" onclick="copyQuestions()">📋 KOPĒT</button>
+    </section>`;
+  }
+
+  if(d.sources?.length){
+    html+=`<section><h2>🔗 Avoti</h2><p class="note">Forumu ieraksti ir īpašnieku pieredze. Tos izmanto kā papildu pārbaudes virzienus, nevis kā pierādījumu, ka konkrētajam auto ir defekts.</p>${d.sources.map(sourceHtml).join("")}</section>`;
+  }
+
+  html+=`<section><h2>🔧 Pirms pirkuma</h2>
+    <p class="sectionHint">Atzīmē apskates laikā.</p>
+    <div class="sheet">
+      ${sheetRow("Dokumenti","Servisa vēsture, rēķini un nobraukuma secība.")}
+      ${sheetRow("Auksts starts","Motoru pārbaudīt pilnīgi aukstu; klausīties trokšņus un vērot dūmus.")}
+      ${sheetRow("Diagnostika","OBD kļūdas, kļūdu vēsture un readiness statusi.")}
+      ${sheetRow("Testa brauciens","Kārba, bremzes, stūre, vibrācijas, trokšņi un jaudas padeve.")}
+      ${sheetRow("Apakša / virsbūve","Noplūdes, korozija, riepas, piekare un remonta pazīmes.")}
+      ${sheetRow("Servisa pārbaude","Ja rodas šaubas — neatkarīga pirmspirkuma pārbaude.")}
+    </div>
+  </section>`;
+
+  html+=`<div class="actions no-print"><button onclick="window.print()">📄 SAGLABĀT PDF</button><button class="secondary" onclick="analyze()">↻ ATJAUNOT</button></div>`;
   $("intel").innerHTML=html;
 }
 
 function renderFallback(v){
-  $("intel").innerHTML=`<section><h2>🔎 Ko pārbaudīt</h2><ul><li>Dzinēja darbība pilnīgi aukstā režīmā, noplūdes, trokšņi un kļūdas.</li><li>Ātrumkārbas darbība auksta/silta un apkopes vēsture.</li><li>Piekare, bremzes, riepas un virsbūve.</li><li>Servisa un nobraukuma vēsture.</li></ul></section>`;
+  $("intel").innerHTML=`<section><h2>🔎 Pamata pārbaude</h2>
+    <div class="sheet">
+      ${sheetRow("Dzinējs","Auksts starts, noplūdes, trokšņi un kļūdas.")}
+      ${sheetRow("Ātrumkārba","Darbība aukstā un siltā režīmā, apkopes vēsture.")}
+      ${sheetRow("Piekare / bremzes","Klaboņa, vibrācijas, riepas un bremzēšana.")}
+      ${sheetRow("Vēsture","Servisa ieraksti, rēķini un nobraukuma secība.")}
+    </div>
+  </section>`;
 }
 
 async function copyQuestions(){
-  const q=[...document.querySelectorAll("#sellerQ li")].map(x=>x.innerText).join("\n");
-  try{await navigator.clipboard.writeText(q);alert("Jautājumi nokopēti!")}catch{alert(q)}
+  const q=[...document.querySelectorAll("#sellerQ .sheetRow")].map(x=>{
+    const title=x.querySelector(".sheetTitle")?.innerText||"";
+    const text=x.querySelector(".sheetText")?.innerText||"";
+    return `${title} — ${text}`.trim();
+  }).join("\n");
+  try{await navigator.clipboard.writeText(q);alert("Punkti nokopēti!")}catch{alert(q)}
 }
 </script>
 </body>

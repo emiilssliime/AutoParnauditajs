@@ -18,59 +18,23 @@ function pick(rows, labels){
   return key?rows[key]:"";
 }
 
-function pickEntry(rows, labels){
-  const key=Object.keys(rows).find(k=>labels.some(x=>k.includes(x)));
-  return key?{key,value:rows[key]}:{key:"",value:""};
-}
-
 function detectFuel(text){
   const t=clean(text).toLowerCase();
-
-  // Only explicit hybrid/electric wording counts. Roman numerals such as IV/V
-  // must never be treated as hybrid evidence.
-  if(/plug[\s-]?in|phev|\bmhev\b|\bhev\b|hibr[iī]d|hybrid|\bgte\b|e-?hybrid/.test(t)) return "hibrīds";
-  if(/elektr|electric|\bbev\b/.test(t)) return "elektrisks";
+  // Explicit hybrid terms only. Roman numerals such as "IV" are NOT fuel indicators.
+  if(/plug[\s-]?in|\bphev\b|\bmhev\b|\bhev\b|hibr[iī]d|hybrid|\bgte\b|e[\s-]?hybrid/.test(t)) return "hibrīds";
+  if(/elektr|electric|\bbev\b|\bev\b/.test(t)) return "elektrisks";
   if(/d[iī]zel|diesel|\btdi\b|\bcdi\b|\bdci\b|\bhdi\b|\bbluehdi\b/.test(t)) return "dīzelis";
   if(/benz[iī]n|petrol|gasoline|\btsi\b|\btfsi\b|\btce\b|\bpuretech\b/.test(t)) return "benzīns";
   return "";
 }
 
-function parsePower(rows, body){
-  const e=pickEntry(rows,["jauda","мощность","power"]);
-  const raw=clean(e.value);
-  const ctx=clean(`${e.key} ${raw}`).toLowerCase();
-
-  // Prefer explicit kW.
-  let m=ctx.match(/(\d{2,4}(?:[.,]\d+)?)\s*k\s*w\b/i);
-  if(m) return String(Math.round(Number(m[1].replace(",","."))));
-
-  // SS often puts the unit in the row label and only the number in the value.
-  const n=(raw.match(/(\d{2,4}(?:[.,]\d+)?)/)||[])[1];
-  if(n){
-    const x=Number(n.replace(",","."));
-    if(/\b(kw|k w)\b/i.test(e.key)) return String(Math.round(x));
-
-    // Convert horsepower only when the source explicitly says hp/ZS/etc.
-    if(/(^|[^a-z])(zs|z\.s\.|hp|bhp|л\.?\s?с\.?)([^a-z]|$)/i.test(ctx)){
-      return String(Math.round(x*0.735499));
-    }
-
-    // If this is clearly the dedicated power row but SS omitted the unit,
-    // use the numeric value as kW rather than leaving power blank.
-    if(e.key && x>=20 && x<=1000) return String(Math.round(x));
-  }
-
-  // Safer page-text fallbacks.
-  m=body.match(/(\d{2,4}(?:[.,]\d+)?)\s*k\s*w\b/i);
-  if(m) return String(Math.round(Number(m[1].replace(",","."))));
-
-  m=body.match(/(?:jauda|power|мощность)[^0-9]{0,25}(\d{2,4})(?:\s*k\s*w)?/i);
-  if(m){
-    const x=Number(m[1]);
-    if(x>=20 && x<=1000) return String(Math.round(x));
-  }
-
-  return "";
+function detectPower(powerRaw, body){
+  const explicit = clean(powerRaw).match(/(\d{2,4})\s*kW\b/i);
+  if(explicit) return explicit[1];
+  const bodyKw = String(body||"").match(/(\d{2,4})\s*kW\b/i);
+  if(bodyKw) return bodyKw[1];
+  const onlyNumber = clean(powerRaw).match(/^\s*(\d{2,4})\s*$/);
+  return onlyNumber ? onlyNumber[1] : "";
 }
 
 async function parseSsListing(url){
@@ -121,14 +85,12 @@ async function parseSsListing(url){
   const yearRaw=pick(rows,["izlaiduma gads","gads","год выпуска","year"]) || (body.match(/\b(19|20)\d{2}\b/)||[])[0] || "";
   const volume=pick(rows,["motora tilpums","dzinēja tilpums","motors","dzinējs","объём двигателя","engine"]);
   const fuelRaw=pick(rows,["degviela","топливо","fuel"]);
+  const fuel=detectFuel(`${volume} ${fuelRaw} ${structured.name||""} ${body.slice(0,6000)}`);
+  const volumeLower=volume.toLowerCase();
+  const engine=clean([volume,fuel && !volumeLower.includes(fuel)?fuel:""].filter(Boolean).join(" "));
 
-  // High-confidence fields first. Only use body text as a last resort.
-  const fuel=
-    detectFuel(`${fuelRaw} ${volume} ${structured.name||""}`) ||
-    detectFuel(body.slice(0,2500));
-
-  const engine=clean([volume,fuel && !volume.toLowerCase().includes(fuel)?fuel:""].filter(Boolean).join(" "));
-  const power=parsePower(rows,body);
+  const powerRaw=pick(rows,["jauda","мощность","power"]);
+  const power=detectPower(powerRaw,body);
   const gearbox=pick(rows,["ātrumkārba","kārba","коробка передач","кпп","transmission"]);
   const mileageRaw=pick(rows,["nobraukums","пробег","mileage"]);
   const mileage=digits(mileageRaw);

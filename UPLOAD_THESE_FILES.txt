@@ -1,27 +1,24 @@
-AUTO PĀRBAUDĪTĀJS V4.6.1 — REFINED CUSTOMER REPORT
+AUTO PĀRBAUDĪTĀJS V4.6.2 — AUGŠUPIELĀDE
 
-This is the refined version of V4.6.0.
+Augšupielādē GitHub repozitorija saknē un pārraksti esošos failus:
+1. index.html
+2. ss-parser.js
+3. vehicle-intelligence.js
+4. server.js
+5. package.json
 
-Upload these 4 files to the ROOT of the same GitHub repository:
-- index.html
-- server.js
-- ss-parser.js
-- vehicle-intelligence.js
+Kas labots:
+- Noņemta kļūdainā "IV/V = hybrid" degvielas noteikšana.
+- Hibrīds tiek atpazīts tikai pēc skaidriem hibrīda apzīmējumiem (PHEV, HEV, MHEV, hybrid, hibrīds, GTE, e-hybrid).
+- Papildināta BlueHDi / PureTech atpazīšana.
+- Precīzāka kW nolasīšana.
+- Klientam vairs netiek rādīts TAVILY_API_KEY / Render tehniskais teksts.
+- "Vehicle Intelligence / Auto izlūkošana" valoda nomainīta uz neitrālu auto pārbaudes plānu.
+- Noņemti AI-stila confidence badge.
+- "Jautājumi pārdevējam" pārtaisīti par īsiem apskates/pārdevēja punktiem.
+- "Pirms pirkuma" pārtaisīts par mehāniķa stila check-sheet.
+- Versija visos galvenajos failos saskaņota uz V4.6.2.
 
-Commit directly to main. Render should redeploy automatically.
-
-Changes in V4.6.1:
-- Keeps the diesel / hybrid and kW fixes from V4.6.0.
-- Removes AI/chatbot-style wording from the customer report.
-- Removes the free-form web-generated summary paragraph.
-- Removes "confidence" badges from customer-facing cards.
-- Uses practical automotive wording: "Ko darīt", "Pazīmes", "Jautā pārdevējam", "Avoti".
-- Shows source counts without exposing backend/provider details.
-- Keeps forum/web claims framed as inspection points, not proven defects.
-- No TAVILY_API_KEY / Render / provider messages are shown publicly.
-
-Recommended test after deploy:
-1. Same old Peugeot diesel.
-2. One genuine PHEV/hybrid.
-3. One petrol car.
-4. Check that report wording feels like a car-buying inspection brief, not a chatbot answer.
+Pēc GitHub Commit changes:
+Render ar Auto-Deploy vajadzētu sākt jaunu deploy.
+Pēc deploy pārbaudi to pašu Peugeot sludinājumu.
