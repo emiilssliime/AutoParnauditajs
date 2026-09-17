@@ -1,0 +1,25 @@
+AUTO PĀRBAUDĪTĀJS V4.5.9 — iPad update
+
+1) Atarhivē šo ZIP.
+2) GitHub -> Auto Pārbaudītājs repo -> Add file -> Upload files.
+3) Atlasiet visus failus no šīs mapes:
+   index.html
+   server.js
+   ss-parser.js
+   vehicle-intelligence.js
+   package.json
+   render.yaml
+   README.md
+4) Commit changes.
+5) Render automātiski sāks jaunu deploy.
+
+Pēc tam Render -> Environment pievieno:
+TAVILY_API_KEY = tava Tavily API atslēga
+
+Tad Redeploy latest commit.
+
+Tests:
+- atver savu .onrender.com URL
+- ielīmē SS.COM auto sludinājumu
+- pēc importa jāparādās V4.5.9 Vehicle Intelligence sadaļai
+- hibrīdam NEDRĪKST parādīties dīzeļa DPF/EGR pārbaude

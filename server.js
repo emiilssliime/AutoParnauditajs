@@ -1,110 +1,55 @@
 const express = require("express");
-const helmet = require("helmet");
 const path = require("path");
 const { parseSsListing } = require("./ss-parser");
+const { buildVehicleIntelligence } = require("./vehicle-intelligence");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.set("trust proxy", 1);
+app.use(express.json({ limit: "50kb" }));
+app.use(express.static(__dirname, { extensions: ["html"] }));
 
-app.use(helmet({
-  contentSecurityPolicy: false
-}));
-app.use(express.json({ limit: "20kb" }));
-app.use(express.static(__dirname, { index: "index.html" }));
-
-function validateSsUrl(value) {
-  let u;
-  try {
-    u = new URL(value);
-  } catch (_) {
-    return { ok: false, error: "Nederīga saite." };
-  }
-
-  if (!["https:", "http:"].includes(u.protocol)) {
-    return { ok: false, error: "Atļauta tikai HTTP/HTTPS saite." };
-  }
-
-  const host = u.hostname.toLowerCase();
-  const allowedHost =
-    host === "ss.com" || host.endsWith(".ss.com") ||
-    host === "ss.lv" || host.endsWith(".ss.lv");
-
-  if (!allowedHost) {
-    return { ok: false, error: "Šobrīd atbalstītas tikai SS.COM un SS.LV saites." };
-  }
-
-  if (!u.pathname.includes("/msg/") || !u.pathname.includes("/transport/cars/")) {
-    return { ok: false, error: "Saitei jābūt vieglā auto sludinājumam SS.COM / SS.LV." };
-  }
-
-  u.hash = "";
-  return { ok: true, url: u.toString() };
+const buckets = new Map();
+function rateLimit(max=20, windowMs=10*60*1000){
+  return (req,res,next)=>{
+    const key=req.ip||"unknown", now=Date.now();
+    let b=buckets.get(key);
+    if(!b||now-b.start>windowMs)b={start:now,count:0};
+    b.count++; buckets.set(key,b);
+    if(b.count>max)return res.status(429).json({error:"Par daudz pieprasījumu. Pamēģini vēlāk."});
+    next();
+  };
+}
+function validSsUrl(raw){
+  try{
+    const u=new URL(raw);
+    return u.protocol==="https:" && /(^|\.)ss\.(com|lv)$/i.test(u.hostname);
+  }catch{return false}
 }
 
-app.get("/api/health", (_, res) => {
-  res.json({ ok: true, service: "Auto Pārbaudītājs", version: "4.0.0" });
-});
+app.get("/health",(req,res)=>res.json({ok:true,version:"4.5.9",liveResearch:Boolean(process.env.TAVILY_API_KEY)}));
 
-app.post("/api/listing", async (req, res) => {
-  const checked = validateSsUrl(req.body?.url);
-  if (!checked.ok) {
-    return res.status(400).json({ error: checked.error });
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-
-  try {
-    const upstream = await fetch(checked.url, {
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "user-agent": "Mozilla/5.0 (compatible; AutoParbauditajs/4.0; +https://localhost)",
-        "accept": "text/html,application/xhtml+xml",
-        "accept-language": "lv-LV,lv;q=0.9,en;q=0.7"
-      }
-    });
-
-    if (!upstream.ok) {
-      return res.status(502).json({
-        error: `SS serveris atbildēja ar statusu ${upstream.status}.`
-      });
-    }
-
-    const contentType = upstream.headers.get("content-type") || "";
-    if (!contentType.includes("text/html")) {
-      return res.status(502).json({ error: "SS neatgrieza HTML sludinājuma lapu." });
-    }
-
-    const html = await upstream.text();
-    if (html.length < 500) {
-      return res.status(502).json({ error: "Saņemta nepilnīga sludinājuma lapa." });
-    }
-
-    const { result, populated } = parseSsListing(html, upstream.url || checked.url);
-
-    if (populated < 4) {
-      return res.status(422).json({
-        error: "Sludinājums tika atvērts, bet neizdevās droši atpazīt pietiekami daudz auto datu."
-      });
-    }
-
-    res.json(result);
-  } catch (err) {
-    const message = err?.name === "AbortError"
-      ? "SS sludinājuma nolasīšanai iestājās noildze."
-      : "Neizdevās savienoties ar SS sludinājuma lapu.";
-    res.status(502).json({ error: message });
-  } finally {
-    clearTimeout(timeout);
+app.post("/api/listing", rateLimit(30), async (req,res)=>{
+  const url=String(req.body?.url||"").trim();
+  if(!validSsUrl(url)) return res.status(400).json({error:"Nepareiza SS.COM / SS.LV saite."});
+  try{
+    const data=await parseSsListing(url);
+    res.json({...data,sourceUrl:url,version:"4.5.9"});
+  }catch(err){
+    console.error("listing error",err);
+    res.status(502).json({error:"SS.COM sludinājumu neizdevās nolasīt. Iespējams, lapa īslaicīgi bloķē automātisku piekļuvi."});
   }
 });
 
-// SPA fallback.
-app.get("*", (_, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+app.post("/api/intelligence", rateLimit(15), async (req,res)=>{
+  try{
+    const data=await buildVehicleIntelligence(req.body||{});
+    res.json(data);
+  }catch(err){
+    console.error("intelligence error",err);
+    res.status(500).json({error:"Neizdevās sagatavot auto izpēti."});
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Auto Pārbaudītājs V4.0: http://localhost:${PORT}`);
-});
+app.get("*",(req,res)=>res.sendFile(path.join(__dirname,"index.html")));
+app.listen(PORT,()=>console.log(`Auto Parbauditajs V4.5.9 listening on ${PORT}`));

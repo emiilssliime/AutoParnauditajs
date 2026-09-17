@@ -1,8 +1,8 @@
 {
   "name": "auto-parbauditajs",
-  "version": "4.0.0",
+  "version": "4.5.9",
   "private": true,
-  "description": "Auto Pārbaudītājs V4 — SS.COM/SS.LV listing import backend",
+  "description": "SS.COM used-car import + vehicle-specific purchase intelligence",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "cheerio": "^1.0.0",
-    "express": "^4.21.2",
-    "helmet": "^8.0.0"
+    "express": "^4.21.2"
   }
 }
