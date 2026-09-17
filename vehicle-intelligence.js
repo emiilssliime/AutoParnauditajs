@@ -1,17 +1,20 @@
 const cache=new Map();
 const TTL=24*60*60*1000;
-
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
 function domainOf(url){try{return new URL(url).hostname.replace(/^www\./,"")}catch{return""}}
 function num(s){return Number(String(s||"").replace(/[^\d]/g,""))||0}
+
 function detect(v){
   const t=norm(`${v.engine||""} ${v.fuel||""}`);
-  if(/plug.?in|phev|hibrid|hybrid|\bgte\b|e-?hybrid|\biv\b/.test(t))return"hybrid";
+
+  // Require explicit hybrid wording. Do not treat model/generation "IV" as hybrid.
+  if(/plug.?in|phev|\bmhev\b|\bhev\b|hibrid|hybrid|\bgte\b|e-?hybrid/.test(t))return"hybrid";
   if(/elektr|electric|\bbev\b|\bev\b/.test(t))return"electric";
-  if(/dizel|diesel|\btdi\b|\bcdi\b|\bdci\b|\bhdi\b/.test(t))return"diesel";
-  if(/benzin|petrol|gasoline|\btsi\b|\btfsi\b|\btce\b/.test(t))return"petrol";
+  if(/dizel|diesel|\btdi\b|\bcdi\b|\bdci\b|\bhdi\b|\bbluehdi\b/.test(t))return"diesel";
+  if(/benzin|petrol|gasoline|\btsi\b|\btfsi\b|\btce\b|\bpuretech\b/.test(t))return"petrol";
   return"unknown";
 }
+
 function fingerprint(v){
   return [v.make,v.model,v.year,v.engine,v.power?`${v.power} kW`:"",v.gearbox].filter(Boolean).join(" • ");
 }
@@ -39,7 +42,6 @@ function forumDomains(make){
   const key=Object.keys(map).find(k=>m.includes(k));
   return [...new Set([...(key?map[key]:[]),...common])];
 }
-
 async function tavily(query,include_domains=[]){
   const key=process.env.TAVILY_API_KEY;
   if(!key)return null;
@@ -56,7 +58,6 @@ async function tavily(query,include_domains=[]){
   if(!r.ok)throw new Error(`Tavily ${r.status}`);
   return r.json();
 }
-
 const CATS=[
  {id:"transmission",title:"Ātrumkārba / transmisija",re:/\b(dsg|mechatronic|gearbox|transmission|clutch|dual clutch|shift|shifting|pārslēg|kārba)\b/i,severity:"high",check:"Aukstā un siltā režīmā pārbaudi D/R ieslēgšanos, lēnu kustību, pārslēgšanos, vibrācijas un servisa pierādījumus.",symptoms:"Raustīšanās, sitieni, aizture, slīdēšana, vibrācija, kļūdu paziņojumi."},
  {id:"hybrid",title:"Hibrīda / augstsprieguma sistēma",re:/\b(hybrid|phev|battery|charging|charger|inverter|electric drive|high voltage|hv battery)\b/i,severity:"high",check:"Pārbaudi uzlādi, EV režīmu, kļūdas, akumulatora diagnostiku un hibrīda dzesēšanas sistēmu.",symptoms:"Samazināts EV nobraukums, uzlādes kļūdas, brīdinājumi, neparasta motora/EV pārslēgšanās."},
@@ -70,7 +71,6 @@ const CATS=[
  {id:"climate",title:"Klimata sistēma",re:/\b(air conditioning|air-con|a\/c|climate|compressor)\b/i,severity:"low",check:"Pārbaudi aukstu/siltu gaisu visos režīmos, kompresora darbību un zonu regulāciju.",symptoms:"Vāja dzesēšana, trokšņi, nevienāda temperatūra."},
  {id:"corrosion",title:"Korozija / virsbūve",re:/\b(rust|corrosion|corrode)\b/i,severity:"med",check:"Pārbaudi sliekšņus, arkas, apakšu, durvju malas, pacelšanas punktus un remonta pēdas.",symptoms:"Burbuļi krāsā, rūsas plankumi, svaigs pārklājums apakšā."}
 ];
-
 function sourceType(domain){
   if(/reddit|forum|briskoda|bimmer|vwvortex|audizine|swedespeed|toyotanation|clublexus|owners/.test(domain))return"Īpašnieku forums";
   if(/whatcar|honestjohn|parkers/.test(domain))return"Lietota auto / uzticamības avots";
@@ -95,18 +95,18 @@ function rankIssues(results,powertrain){
     id:x.id,title:x.title,severity:x.severity,
     confidence:x.domains.size>=3?"high":x.domains.size>=2?"med":"low",
     sourceCount:x.domains.size,
-    reason:x.domains.size>=2?`Tēma atkārtojas ${x.domains.size} neatkarīgos avotos.`:"Tēma atrasta vienā avotā — pārbaudi, bet neuzskati to par pierādītu tipisku defektu.",
+    reason:x.domains.size>=2?`Minēts ${x.domains.size} neatkarīgos avotos.`:"Minēts vienā avotā — izmanto kā papildu pārbaudes punktu.",
     check:x.check,symptoms:x.symptoms
   }));
 }
 function baselineIssues(v,powertrain){
   const out=[];
   const auto=/auto|dsg|tronic|cvt|geartronic|steptronic|dct|edc|powershift/i.test(v.gearbox||"");
-  if(auto)out.push({...CATS.find(x=>x.id==="transmission"),confidence:"med",sourceCount:0,reason:"Automātiskajai transmisijai vienmēr pārbaudi darbību un apkopes vēsturi."});
-  if(powertrain==="hybrid")out.push({...CATS.find(x=>x.id==="hybrid"),confidence:"med",sourceCount:0,reason:"PHEV/hibrīdam jānovērtē gan iekšdedzes, gan augstsprieguma sistēma."});
-  if(powertrain==="diesel")out.push({...CATS.find(x=>x.id==="emissions"),confidence:"med",sourceCount:0,reason:"Dīzeļa auto pārbaudes punkts; tas nav apgalvojums, ka konkrētajam auto ir defekts."});
-  if(powertrain==="petrol")out.push({id:"petrol",title:"Benzīna dzinējs",severity:"med",confidence:"med",sourceCount:0,reason:"Pamata pārbaude benzīna/turbo-benzīna motoram.",check:"Auksts starts, misfire, eļļas un dzesēšanas noplūdes, turbīnas darbība (ja ir), servisa intervāli.",symptoms:"Nevienmērīga darbība, dūmi, ķēdes/siksnas trokšņi, jaudas zudums."});
-  if(powertrain==="electric")out.push({...CATS.find(x=>x.id==="hybrid"),title:"Augstsprieguma akumulators / elektriskā piedziņa",confidence:"med",sourceCount:0,reason:"Elektroauto galvenais vērtības un tehniskais mezgls."});
+  if(auto)out.push({...CATS.find(x=>x.id==="transmission"),confidence:"med",sourceCount:0,reason:"Pārbaudi darbību aukstā un siltā režīmā un pieprasi apkopes pierādījumus."});
+  if(powertrain==="hybrid")out.push({...CATS.find(x=>x.id==="hybrid"),confidence:"med",sourceCount:0,reason:"Pārbaudi gan iekšdedzes motoru, gan augstsprieguma sistēmu."});
+  if(powertrain==="diesel")out.push({...CATS.find(x=>x.id==="emissions"),confidence:"med",sourceCount:0,reason:"Dīzelim īpaši pārbaudi DPF/EGR un emisiju sistēmas stāvokli."});
+  if(powertrain==="petrol")out.push({id:"petrol",title:"Benzīna dzinējs",severity:"med",confidence:"med",sourceCount:0,reason:"Benzīna motoram pārbaudi auksto startu, aizdedzi, noplūdes un turbīnu, ja tāda ir.",check:"Auksts starts, misfire, eļļas un dzesēšanas noplūdes, turbīnas darbība (ja ir), servisa intervāli.",symptoms:"Nevienmērīga darbība, dūmi, ķēdes/siksnas trokšņi, jaudas zudums."});
+  if(powertrain==="electric")out.push({...CATS.find(x=>x.id==="hybrid"),title:"Augstsprieguma akumulators / elektriskā piedziņa",confidence:"med",sourceCount:0,reason:"Galvenais pārbaudes punkts ir augstsprieguma baterijas stāvoklis un uzlāde."});
   return out;
 }
 function mileageChecks(v,powertrain){
@@ -130,13 +130,12 @@ function sellerQuestions(v,powertrain,issues){
   }
   return [...new Set(q)].slice(0,8);
 }
-
 async function buildVehicleIntelligence(v){
   const powertrain=detect(v), fp=fingerprint(v), ck=norm(fp);
   const c=cache.get(ck);
   if(c&&Date.now()-c.time<TTL)return c.data;
 
-  let webResults=[], webSummary="", researchStatus=process.env.TAVILY_API_KEY?"live":"needs_api_key";
+  let webResults=[], webSummary="", researchStatus=process.env.TAVILY_API_KEY?"live":"offline";
   if(process.env.TAVILY_API_KEY){
     try{
       const q1=`${fp} common problems reliability known issues owner forum used car buying guide`;
@@ -146,14 +145,14 @@ async function buildVehicleIntelligence(v){
         tavily(q2,["car-recalls.eu","ec.europa.eu","gov.uk"])
       ]);
       for(const x of [a,b]){
-        if(x?.answer)webSummary += (webSummary?" ":"")+x.answer;
-        for(const r of x?.results||[])webResults.push(r);
+                for(const r of x?.results||[])webResults.push(r);
       }
     }catch(e){
       console.error("research provider",e.message);
-      researchStatus="provider_error";
+      researchStatus="offline";
     }
   }
+
   const seen=new Set();
   const sources=webResults.filter(r=>{
     if(!r.url||seen.has(r.url))return false;seen.add(r.url);return true;
@@ -165,8 +164,8 @@ async function buildVehicleIntelligence(v){
   issues=issues.slice(0,8);
 
   const data={
-    version:"4.5.9",fingerprint:fp,powertrain,researchStatus,
-    webSummary:webSummary.slice(0,1400),
+    version:"4.6.1",fingerprint:fp,powertrain,researchStatus,
+    webSummary:"",
     issues,mileageChecks:mileageChecks(v,powertrain),
     sellerQuestions:sellerQuestions(v,powertrain,issues),
     sources

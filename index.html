@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auto Pārbaudītājs — V4.5.9</title>
+<title>Auto Pārbaudītājs — V4.6.1</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f3f5f7;--card:#fff;--text:#18202a;--muted:#6b7280;--line:#e5e7eb;--dark:#111827;--green:#176b38;--greenbg:#eaf8ef;--amber:#8a5a00;--amberbg:#fff5d8;--red:#a12626;--redbg:#fff0f0;--blue:#245b9e;--bluebg:#edf5ff}
@@ -28,9 +28,9 @@ ul{padding-left:22px;margin-bottom:0}li{margin:8px 0;line-height:1.45}.summary{b
 <body>
 <div class="wrap">
   <div class="card">
-    <span class="badge">V4.5.9 • VEHICLE INTELLIGENCE</span>
+    <span class="badge">V4.6.1 • AUTO PĀRBAUDES PĀRSKATS</span>
     <h1>🚗 Auto Pārbaudītājs</h1>
-    <p class="sub">Ielīmē SS.COM sludinājuma saiti. Auto dati un pirkuma riski tiek pielāgoti konkrētajam modelim, dzinējam, kārbai un nobraukumam.</p>
+    <p class="sub">Ielīmē SS.COM sludinājuma saiti un saņem konkrētajam auto pielāgotu pirmspirkuma pārbaudes sarakstu.</p>
     <div class="urlrow">
       <input id="listingUrl" type="url" placeholder="https://www.ss.com/msg/lv/transport/cars/...">
       <button onclick="searchListing()">🔎 MEKLĒT AUTO</button>
@@ -62,6 +62,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const val=id=>$(id).value.trim();
 const vehicle=()=>({make:val("make"),model:val("model"),year:val("year"),engine:val("engine"),power:val("power"),gearbox:val("gearbox"),mileage:val("mileage"),price:val("price"),listingUrl:val("listingUrl")});
 const withUnit=(x,u)=>!x?"—":String(x).toLowerCase().includes(u.toLowerCase())?x:`${x} ${u}`;
+
 function fill(d){["make","model","year","engine","power","gearbox","mileage","price"].forEach(k=>{if(d[k]!==undefined&&d[k]!==null&&String(d[k]).trim()!=="")$(k).value=d[k]})}
 function setStatus(text,kind=""){$("status").className="status"+(kind?` ${kind}`:"");$("status").textContent=text}
 
@@ -75,9 +76,11 @@ async function searchListing(){
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||"Neizdevās nolasīt sludinājumu");
     fill(d);
-    setStatus("✓ Sludinājuma dati atrasti. Veidoju konkrētā auto pārbaudes plānu…","ok");
+    setStatus("✓ Sludinājuma dati atrasti. Sagatavoju pārbaudes punktus…","ok");
     await analyze();
-  }catch(e){setStatus("Neizdevās importēt: "+e.message,"err")}
+  }catch(e){
+    setStatus("Neizdevās importēt sludinājumu. Pārbaudi saiti un mēģini vēlreiz.","err");
+  }
 }
 
 function baseHtml(v){
@@ -90,7 +93,7 @@ function baseHtml(v){
     <div class="metric"><small>Nobraukums</small><b>${esc(withUnit(v.mileage,"km"))}</b></div>
     <div class="metric"><small>Cena</small><b>${v.price?`€${esc(v.price)}`:"—"}</b></div>
   </div>
-  <section><h2>🧠 Auto izlūkošana</h2><div id="intelStatus" class="status work">Meklēju modelim raksturīgos riskus un īpašnieku pieredzi…</div><div id="intel"></div></section>`;
+  <section><h2>🔎 Ko pārbaudīt šim auto</h2><div id="intelStatus" class="status work">Apkopoju pārbaudes punktus…</div><div id="intel"></div></section>`;
 }
 
 async function analyze(){
@@ -105,45 +108,52 @@ async function analyze(){
     if(!r.ok) throw new Error(d.error||"Intelligence unavailable");
     renderIntel(d,v);
   }catch(e){
-    $("intelStatus").className="status err";
-    $("intelStatus").textContent="Web izpētes modulis pašlaik nav pieejams. Rādu drošos lokālos pārbaudes punktus.";
+    $("intelStatus").className="status ok";
+    $("intelStatus").textContent="✓ Pārbaudes saraksts gatavs.";
     renderFallback(v);
   }
 }
 
 function issueHtml(i){
-  const sev=i.severity==="high"?"Augsta nozīme":i.severity==="low"?"Zemāka nozīme":"Vidēja nozīme";
-  const conf=i.confidence==="high"?"Augsta pārliecība":i.confidence==="low"?"Zema pārliecība":"Vidēja pārliecība";
+  const sev=i.severity==="high"?"Svarīgi":i.severity==="low"?"Papildus":"Pārbaudi";
   return `<div class="issue">
-    <div class="issueTop"><div><h3>${esc(i.title)}</h3><div class="muted">${esc(i.reason||"")}</div></div></div>
-    <div class="tags"><span class="pill sev-${esc(i.severity||"med")}">${sev}</span><span class="pill conf-${esc(i.confidence||"med")}">${conf}</span>${i.sourceCount?`<span class="pill">${i.sourceCount} avoti</span>`:""}</div>
-    ${i.check?`<div><b>Pārbaudi:</b> ${esc(i.check)}</div>`:""}
+    <div class="issueTop"><div><h3>${esc(i.title)}</h3>${i.reason?`<div class="muted">${esc(i.reason)}</div>`:""}</div></div>
+    <div class="tags"><span class="pill sev-${esc(i.severity||"med")}">${sev}</span>${i.sourceCount?`<span class="pill">Avoti: ${i.sourceCount}</span>`:""}</div>
+    ${i.check?`<div><b>Ko darīt:</b> ${esc(i.check)}</div>`:""}
     ${i.symptoms?`<div style="margin-top:6px"><b>Pazīmes:</b> ${esc(i.symptoms)}</div>`:""}
   </div>`;
 }
+
 function sourceHtml(s){
   return `<div class="source"><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title||s.domain||"Avots")}</a><small>${esc(s.domain||"")}${s.type?` • ${esc(s.type)}`:""}</small></div>`;
 }
+
 function renderIntel(d,v){
   const st=$("intelStatus");
-  if(d.researchStatus==="live"){st.className="status ok";st.textContent=`✓ Tiešsaistes izpēte pabeigta — ${d.sources?.length||0} avoti, ${d.issues?.length||0} prioritāri pārbaudes temati.`}
-  else if(d.researchStatus==="needs_api_key"){st.className="status";st.textContent="Modelim pielāgotā loģika darbojas. Lai ieslēgtu dzīvo forumu un web avotu meklēšanu, Render jāpievieno TAVILY_API_KEY."}
-  else {st.className="status";st.textContent="Pielāgota pārbaude sagatavota no pieejamajiem datiem."}
+  if(d.researchStatus==="live"){
+    st.className="status ok";
+    st.textContent=`✓ Pārbaudes saraksts gatavs — ${d.issues?.length||0} galvenie punkti.`;
+  }else{
+    // Never expose API keys, Render, provider errors or backend state to customers.
+    st.className="status ok";
+    st.textContent="✓ Pārbaudes saraksts gatavs.";
+  }
 
   let html="";
   if(d.fingerprint) html+=`<div class="summary"><b>Atpazītais auto:</b> ${esc(d.fingerprint)}</div>`;
-  if(d.webSummary) html+=`<section><h2>🌐 Ko rāda avoti</h2><div class="summary">${esc(d.webSummary)}</div></section>`;
-  html+=`<section><h2>⚠️ Tipiskie riski / tēmas šim auto</h2>${(d.issues||[]).map(issueHtml).join("")||"<p class='muted'>Konkrēti atkārtoti riski avotos netika droši identificēti.</p>"}</section>`;
-  if(d.mileageChecks?.length) html+=`<section><h2>🛣️ Pie šī nobraukuma īpaši pārbaudīt</h2><ul>${d.mileageChecks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>`;
-  if(d.sellerQuestions?.length) html+=`<section><h2>💬 Jautājumi pārdevējam</h2><ul id="sellerQ">${d.sellerQuestions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="secondary no-print" onclick="copyQuestions()">📋 KOPĒT JAUTĀJUMUS</button></section>`;
-  if(d.sources?.length) html+=`<section><h2>🔗 Avoti</h2><p class="note">Forumu ieraksti ir īpašnieku pieredze, nevis automātiski pierādīts defekts. Lielāka pārliecība tiek piešķirta tēmām, kas atkārtojas vairākos neatkarīgos avotos.</p>${d.sources.map(sourceHtml).join("")}</section>`;
+    html+=`<section><h2>⚠️ Biežāk pārbaudāmie mezgli</h2>${(d.issues||[]).map(issueHtml).join("")||"<p class='muted'>Papildu modelim raksturīgi punkti netika atrasti.</p>"}</section>`;
+  if(d.mileageChecks?.length) html+=`<section><h2>🛣️ Pie šī nobraukuma</h2><ul>${d.mileageChecks.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></section>`;
+  if(d.sellerQuestions?.length) html+=`<section><h2>💬 Jautā pārdevējam</h2><ul id="sellerQ">${d.sellerQuestions.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="secondary no-print" onclick="copyQuestions()">📋 KOPĒT JAUTĀJUMUS</button></section>`;
+  if(d.sources?.length) html+=`<section><h2>🔗 Avoti</h2><p class="note">Avotos minētās problēmas nav garantēts defekts konkrētajam auto. Tās izmanto kā pārbaudes punktus pirms pirkuma.</p>${d.sources.map(sourceHtml).join("")}</section>`;
   html+=`<section><h2>🔧 Pirms pirkuma</h2><ul><li>OBD diagnostika un kļūdu/ready-status pārbaude.</li><li>Servisa vēstures, rēķinu un nobraukuma secības pārbaude.</li><li>Auksts starts un pilns testa brauciens.</li><li>Piekare, bremzes, riepas, apakša un virsbūves remonta pazīmes.</li><li>Ja ir šaubas — neatkarīga pirmspirkuma pārbaude servisā.</li></ul></section>`;
   html+=`<div class="actions no-print"><button onclick="window.print()">📄 SAGLABĀT PDF</button><button class="secondary" onclick="analyze()">↻ ATJAUNOT ANALĪZI</button></div>`;
   $("intel").innerHTML=html;
 }
+
 function renderFallback(v){
   $("intel").innerHTML=`<section><h2>🔎 Ko pārbaudīt</h2><ul><li>Dzinēja darbība pilnīgi aukstā režīmā, noplūdes, trokšņi un kļūdas.</li><li>Ātrumkārbas darbība auksta/silta un apkopes vēsture.</li><li>Piekare, bremzes, riepas un virsbūve.</li><li>Servisa un nobraukuma vēsture.</li></ul></section>`;
 }
+
 async function copyQuestions(){
   const q=[...document.querySelectorAll("#sellerQ li")].map(x=>x.innerText).join("\n");
   try{await navigator.clipboard.writeText(q);alert("Jautājumi nokopēti!")}catch{alert(q)}

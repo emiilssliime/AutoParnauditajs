@@ -1,11 +1,27 @@
-Upload ALL files in this folder to the ROOT of one GitHub repository.
+AUTO PĀRBAUDĪTĀJS V4.6.1 — REFINED CUSTOMER REPORT
 
-Required:
+This is the refined version of V4.6.0.
+
+Upload these 4 files to the ROOT of the same GitHub repository:
 - index.html
 - server.js
 - ss-parser.js
-- package.json
-- render.yaml
+- vehicle-intelligence.js
 
-The other files are instructions/notes.
-Do not upload the ZIP file itself to Render. GitHub should contain the extracted files.
+Commit directly to main. Render should redeploy automatically.
+
+Changes in V4.6.1:
+- Keeps the diesel / hybrid and kW fixes from V4.6.0.
+- Removes AI/chatbot-style wording from the customer report.
+- Removes the free-form web-generated summary paragraph.
+- Removes "confidence" badges from customer-facing cards.
+- Uses practical automotive wording: "Ko darīt", "Pazīmes", "Jautā pārdevējam", "Avoti".
+- Shows source counts without exposing backend/provider details.
+- Keeps forum/web claims framed as inspection points, not proven defects.
+- No TAVILY_API_KEY / Render / provider messages are shown publicly.
+
+Recommended test after deploy:
+1. Same old Peugeot diesel.
+2. One genuine PHEV/hybrid.
+3. One petrol car.
+4. Check that report wording feels like a car-buying inspection brief, not a chatbot answer.
