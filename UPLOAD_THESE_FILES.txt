@@ -1,4 +1,4 @@
-AUTO PĀRBAUDĪTĀJS V4.6.2 — AUGŠUPIELĀDE
+AUTO PĀRBAUDĪTĀJS V5.1 — AUGŠUPIELĀDE
 
 Augšupielādē GitHub repozitorija saknē un pārraksti esošos failus:
 1. index.html
@@ -7,18 +7,20 @@ Augšupielādē GitHub repozitorija saknē un pārraksti esošos failus:
 4. server.js
 5. package.json
 
-Kas labots:
-- Noņemta kļūdainā "IV/V = hybrid" degvielas noteikšana.
-- Hibrīds tiek atpazīts tikai pēc skaidriem hibrīda apzīmējumiem (PHEV, HEV, MHEV, hybrid, hibrīds, GTE, e-hybrid).
-- Papildināta BlueHDi / PureTech atpazīšana.
-- Precīzāka kW nolasīšana.
-- Klientam vairs netiek rādīts TAVILY_API_KEY / Render tehniskais teksts.
-- "Vehicle Intelligence / Auto izlūkošana" valoda nomainīta uz neitrālu auto pārbaudes plānu.
-- Noņemti AI-stila confidence badge.
-- "Jautājumi pārdevējam" pārtaisīti par īsiem apskates/pārdevēja punktiem.
-- "Pirms pirkuma" pārtaisīts par mehāniķa stila check-sheet.
-- Versija visos galvenajos failos saskaņota uz V4.6.2.
+V5.1 galvenās izmaiņas:
+- Salabota dīzeļa/elektro kļūda: degvielas tips vairs netiek noteikts no visa SS.COM lapas teksta.
+- "Electric" aprīkojuma teksts (logi, spoguļi utt.) vairs nevar pārvērst dīzeli par elektroauto.
+- EV/hibrīda pārbaudes punkti tiek rādīti tikai tad, ja pats auto tiešām identificēts kā EV/hibrīds.
+- Latvijas avoti pievienoti izpētei: Auto ABC (auto-abc.lv), iAuto (iauto.lv), AUTODOC Latvija (autodoc.lv).
+- Pievienots SS.COM tirgus cenas orientieris: cenu piemēru skaits, 25–75% diapazons un mediāna, ja pieejami vismaz 3 derīgi cenu piemēri.
+- Tirgus cena netiek izdomāta: ja datu nav pietiekami, sadaļa netiek rādīta.
+- Saglabāts V4.6.2 mehāniķa stila check-sheet un neitrālāks teksts.
 
-Pēc GitHub Commit changes:
+Pēc GitHub "Commit changes":
 Render ar Auto-Deploy vajadzētu sākt jaunu deploy.
-Pēc deploy pārbaudi to pašu Peugeot sludinājumu.
+
+Pirmais tests:
+1. Atver to pašu Peugeot dīzeļa sludinājumu.
+2. Pārliecinies, ka dzinējs ir tikai dīzelis un nav elektro/HV punktu.
+3. Pārbaudi, vai avotos parādās Latvijas avoti, ja meklētājs tos atrod.
+4. Pārbaudi tirgus cenas sadaļu. Tā parādīsies tikai tad, ja SS.COM meklējumā ir vismaz 3 derīgi cenu piemēri.

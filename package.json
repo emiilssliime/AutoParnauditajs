@@ -1,8 +1,8 @@
 {
   "name": "auto-parbauditajs",
-  "version": "4.6.2",
+  "version": "5.1.0",
   "private": true,
-  "description": "SS.COM used-car import + vehicle-specific pre-purchase inspection",
+  "description": "SS.COM used-car import + Latvian-source vehicle research + market-price snapshot",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

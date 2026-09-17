@@ -76,6 +76,10 @@ const CATS=[
 ];
 
 function sourceType(domain){
+  if(/auto-abc\.lv/.test(domain))return"Latvijas auto datubāze";
+  if(/iauto\.lv/.test(domain))return"Latvijas īpašnieku pieredze";
+  if(/autodoc\.lv/.test(domain))return"Defektu / apkopes avots";
+  if(/ss\.com|ss\.lv/.test(domain))return"Latvijas tirgus sludinājums";
   if(/reddit|forum|briskoda|bimmer|vwvortex|audizine|swedespeed|toyotanation|clublexus|owners/.test(domain))return"Īpašnieku forums";
   if(/whatcar|honestjohn|parkers/.test(domain))return"Lietota auto / uzticamības avots";
   if(/europa\.eu|gov\.uk|skoda-auto|volkswagen|bmw|mercedes|audi\.com/.test(domain))return"Oficiāls / atsaukumu avots";
@@ -152,32 +156,80 @@ function sellerQuestions(v,powertrain,issues){
   return [...new Set(q)].slice(0,8);
 }
 
+
+function extractMarketPrices(results){
+  const prices=[];
+  for(const r of results||[]){
+    const text=`${r.title||""} ${r.content||""}`;
+    const patterns=[
+      /(?:€|EUR)\s*([\d\s.,]{3,12})/gi,
+      /([\d\s.,]{3,12})\s*(?:€|EUR)/gi,
+      /(?:cena|price)\s*:?\s*([\d\s.,]{3,12})/gi
+    ];
+    for(const re of patterns){
+      let m;
+      while((m=re.exec(text))){
+        const n=Number(String(m[1]).replace(/[^\d]/g,""));
+        if(n>=700 && n<=200000) prices.push(n);
+      }
+    }
+  }
+  return [...new Set(prices)].sort((a,b)=>a-b);
+}
+
+function median(a){
+  if(!a.length)return 0;
+  const i=Math.floor(a.length/2);
+  return a.length%2?a[i]:Math.round((a[i-1]+a[i])/2);
+}
+
+function marketSnapshot(results,askingPrice){
+  const prices=extractMarketPrices(results);
+  if(prices.length<3)return null;
+  const med=median(prices);
+  const lo=prices[Math.floor((prices.length-1)*0.25)];
+  const hi=prices[Math.ceil((prices.length-1)*0.75)];
+  const ask=num(askingPrice);
+  let position="";
+  if(ask&&med){
+    const d=(ask-med)/med;
+    position=d<=-0.08?"zem tirgus vidus":d>=0.08?"virs tirgus vidus":"tuvu tirgus vidum";
+  }
+  return {sampleCount:prices.length,low:lo,high:hi,median:med,askingPrice:ask||null,position};
+}
+
 async function buildVehicleIntelligence(v){
   const powertrain=detect(v), fp=fingerprint(v), ck=norm(fp);
   const c=cache.get(ck);
   if(c&&Date.now()-c.time<TTL)return c.data;
 
-  let webResults=[], researchStatus=process.env.TAVILY_API_KEY?"live":"offline";
+  let webResults=[], marketResults=[], researchStatus=process.env.TAVILY_API_KEY?"live":"offline";
 
   if(process.env.TAVILY_API_KEY){
     try{
       const q1=`${fp} common problems reliability known issues owner forum used car buying guide`;
       const q2=`${v.make||""} ${v.model||""} ${v.year||""} ${v.engine||""} recall safety campaign Europe`;
-      const [a,b]=await Promise.all([
+      const q3=`${v.make||""} ${v.model||""} ${v.year||""} ${v.engine||""} problēmas atsauksmes patēriņš apkope`;
+      const q4=`${v.make||""} ${v.model||""} ${v.year||""} ${v.engine||""} ${v.gearbox||""} cena`;
+      const [a,b,c,m]=await Promise.all([
         tavily(q1,forumDomains(v.make)),
-        tavily(q2,["car-recalls.eu","ec.europa.eu","gov.uk"])
+        tavily(q2,["car-recalls.eu","ec.europa.eu","gov.uk"]),
+        tavily(q3,["auto-abc.lv","iauto.lv","autodoc.lv"]),
+        tavily(q4,["ss.com"])
       ]);
-      for(const x of [a,b]){
+      for(const x of [a,b,c]){
         for(const r of x?.results||[])webResults.push(r);
       }
+      marketResults=m?.results||[];
     }catch(e){
       console.error("research provider",e.message);
       researchStatus="offline";
     }
   }
 
+  const market=marketSnapshot(marketResults,v.price);
   const seen=new Set();
-  const sources=webResults.filter(r=>{
+  const sources=[...webResults,...marketResults].filter(r=>{
     if(!r.url||seen.has(r.url))return false;
     seen.add(r.url);
     return true;
@@ -191,7 +243,7 @@ async function buildVehicleIntelligence(v){
   issues=issues.slice(0,8);
 
   const data={
-    version:"4.6.2",
+    version:"5.1",
     fingerprint:fp,
     powertrain,
     researchStatus,
@@ -199,6 +251,7 @@ async function buildVehicleIntelligence(v){
     issues,
     mileageChecks:mileageChecks(v,powertrain),
     sellerQuestions:sellerQuestions(v,powertrain,issues),
+    market,
     sources
   };
 

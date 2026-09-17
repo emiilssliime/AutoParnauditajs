@@ -30,14 +30,14 @@ function validSsUrl(raw){
   }catch{return false}
 }
 
-app.get("/health",(req,res)=>res.json({ok:true,version:"4.6.2",liveResearch:Boolean(process.env.TAVILY_API_KEY)}));
+app.get("/health",(req,res)=>res.json({ok:true,version:"5.1",liveResearch:Boolean(process.env.TAVILY_API_KEY)}));
 
 app.post("/api/listing", rateLimit(30), async (req,res)=>{
   const url=String(req.body?.url||"").trim();
   if(!validSsUrl(url)) return res.status(400).json({error:"Nepareiza SS.COM / SS.LV saite."});
   try{
     const data=await parseSsListing(url);
-    res.json({...data,sourceUrl:url,version:"4.6.2"});
+    res.json({...data,sourceUrl:url,version:"5.1"});
   }catch(err){
     console.error("listing error",err);
     res.status(502).json({error:"SS.COM sludinājumu neizdevās nolasīt. Iespējams, lapa īslaicīgi bloķē automātisku piekļuvi."});
@@ -55,4 +55,4 @@ app.post("/api/intelligence", rateLimit(15), async (req,res)=>{
 });
 
 app.get("*",(req,res)=>res.sendFile(path.join(__dirname,"index.html")));
-app.listen(PORT,()=>console.log(`Auto Parbauditajs V4.6.2 listening on ${PORT}`));
+app.listen(PORT,()=>console.log(`Auto Parbauditajs V5.1 listening on ${PORT}`));

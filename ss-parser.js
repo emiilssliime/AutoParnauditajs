@@ -85,7 +85,11 @@ async function parseSsListing(url){
   const yearRaw=pick(rows,["izlaiduma gads","gads","год выпуска","year"]) || (body.match(/\b(19|20)\d{2}\b/)||[])[0] || "";
   const volume=pick(rows,["motora tilpums","dzinēja tilpums","motors","dzinējs","объём двигателя","engine"]);
   const fuelRaw=pick(rows,["degviela","топливо","fuel"]);
-  const fuel=detectFuel(`${volume} ${fuelRaw} ${structured.name||""} ${body.slice(0,6000)}`);
+  // Fuel type must come from the listing's actual engine/fuel fields.
+  // Do not scan the whole page: words such as "electric windows/mirrors" are equipment, not powertrain.
+  const primaryFuelText=clean(`${fuelRaw} ${volume}`);
+  const fallbackFuelText=clean(`${structured.name||""} ${$("title").text()||""}`);
+  const fuel=detectFuel(primaryFuelText) || (!fuelRaw ? detectFuel(fallbackFuelText) : "");
   const volumeLower=volume.toLowerCase();
   const engine=clean([volume,fuel && !volumeLower.includes(fuel)?fuel:""].filter(Boolean).join(" "));
 

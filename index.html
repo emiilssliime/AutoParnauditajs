@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auto Pārbaudītājs — V4.6.2</title>
+<title>Auto Pārbaudītājs — V5.1</title>
 <style>
 *{box-sizing:border-box}
 :root{--bg:#f3f5f7;--card:#fff;--text:#18202a;--muted:#6b7280;--line:#e5e7eb;--dark:#111827;--green:#176b38;--greenbg:#eaf8ef;--amber:#8a5a00;--amberbg:#fff5d8;--red:#a12626;--redbg:#fff0f0;--blue:#245b9e;--bluebg:#edf5ff}
@@ -31,7 +31,7 @@ section{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}.issue
 <body>
 <div class="wrap">
   <div class="card">
-    <span class="badge">V4.6.2 • AUTO PĀRBAUDE</span>
+    <span class="badge">V5.1 • AUTO PĀRBAUDE</span>
     <h1>🚗 Auto Pārbaudītājs</h1>
     <p class="sub">Ielīmē SS.COM sludinājuma saiti. Auto dati un pārbaudes punkti tiek pielāgoti konkrētajam modelim, dzinējam, kārbai un nobraukumam.</p>
     <div class="urlrow">
@@ -157,6 +157,17 @@ function renderIntel(d,v){
   let html="";
   if(d.fingerprint) html+=`<div class="summary"><b>Auto:</b> ${esc(d.fingerprint)}</div>`;
 
+  if(d.market){
+    const pos=d.market.position?` • ${esc(d.market.position)}`:"";
+    html+=`<section><h2>💶 Tirgus cena Latvijā</h2>
+      <div class="summary">
+        <b>Orientējošs diapazons:</b> €${esc(d.market.low)}–€${esc(d.market.high)}<br>
+        <b>Mediāna:</b> €${esc(d.market.median)}${pos}<br>
+        <span class="note">Atrasti ${esc(d.market.sampleCount)} cenu piemēri SS.COM meklēšanas rezultātos. Šis ir orientieris, nevis vērtējums.</span>
+      </div>
+    </section>`;
+  }
+
   html+=`<section><h2>⚠️ Tipiskie riski šim auto</h2>${(d.issues||[]).map(issueHtml).join("")||"<p class='muted'>Papildu modelim raksturīgi riski nav identificēti.</p>"}</section>`;
 
   if(d.mileageChecks?.length){
@@ -172,7 +183,7 @@ function renderIntel(d,v){
   }
 
   if(d.sources?.length){
-    html+=`<section><h2>🔗 Avoti</h2><p class="note">Forumu ieraksti ir īpašnieku pieredze. Tos izmanto kā papildu pārbaudes virzienus, nevis kā pierādījumu, ka konkrētajam auto ir defekts.</p>${d.sources.map(sourceHtml).join("")}</section>`;
+    html+=`<section><h2>🔗 Avoti</h2><p class="note">Pārbaudē tiek meklēta informācija arī Auto ABC, iAuto un AUTODOC. Forumu ieraksti ir īpašnieku pieredze — tos izmanto kā papildu pārbaudes virzienus, nevis kā pierādījumu, ka konkrētajam auto ir defekts.</p>${d.sources.map(sourceHtml).join("")}</section>`;
   }
 
   html+=`<section><h2>🔧 Pirms pirkuma</h2>
