@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Pārbaudītājs — V4.0</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f3f5f7;margin:0;padding:18px;color:#18202a}
+.wrap{max-width:820px;margin:auto}
+.card{background:#fff;border-radius:20px;padding:22px;box-shadow:0 8px 30px #00000010;margin-bottom:14px}
+h1{margin:0 0 6px;font-size:30px}.sub{color:#6b7280;margin:0 0 20px}
+.badge{display:inline-block;background:#e8f7ee;color:#18723b;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:14px}
+.urlrow{display:grid;grid-template-columns:1fr auto;gap:10px}
+input,button{font:inherit;border-radius:12px;padding:14px}
+input{border:1px solid #d5dae0;width:100%;background:#fff}
+button{border:0;background:#111827;color:#fff;font-weight:700;cursor:pointer}
+button.secondary{background:#eef1f4;color:#1f2937}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hidden{display:none}.status{margin-top:12px;padding:12px;border-radius:12px;background:#f5f7f9;color:#4b5563}
+.status.ok{background:#eaf8ef;color:#176b38}.status.err{background:#fff0f0;color:#a12626}
+.data{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.metric{background:#f7f8fa;border-radius:14px;padding:13px}.metric small{display:block;color:#6b7280;margin-bottom:5px}.metric b{font-size:17px}
+section{border-top:1px solid #e5e7eb;margin-top:18px;padding-top:16px}li{margin:8px 0}
+@media(max-width:650px){.urlrow,.grid{grid-template-columns:1fr}.data{grid-template-columns:1fr 1fr}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="card">
+  <span class="badge">V4.0 • SS AUTO-IMPORT</span>
+  <h1>🚗 Auto Pārbaudītājs</h1>
+  <p class="sub">Ielīmē SS.COM vai SS.LV sludinājuma saiti — serveris nolasīs sludinājuma datus automātiski.</p>
+  <div class="urlrow">
+   <input id="listingUrl" type="url" placeholder="https://www.ss.com/msg/lv/transport/cars/...">
+   <button id="searchBtn" onclick="searchListing()">🔎 MEKLĒT AUTO</button>
+  </div>
+  <div id="status" class="status">Gatavs. Ielīmē SS.COM / SS.LV auto sludinājuma saiti un spied MEKLĒT AUTO.</div>
+ </div>
+
+ <div class="card">
+  <h2>Auto dati</h2>
+  <div class="grid">
+   <input id="make" placeholder="Marka (BMW)">
+   <input id="model" placeholder="Modelis (320d)">
+   <input id="year" placeholder="Gads (2015)" type="number">
+   <input id="engine" placeholder="Dzinējs (2.0 diesel)">
+   <input id="power" placeholder="Jauda (kW)">
+   <input id="gearbox" placeholder="Ātrumkārba">
+   <input id="mileage" placeholder="Nobraukums (km)">
+   <input id="price" placeholder="Cena (€)">
+  </div>
+  <button style="width:100%;margin-top:12px" onclick="analyze()">ANALIZĒT AUTO</button>
+ </div>
+
+ <div id="result" class="card hidden"></div>
+</div>
+
+<script>
+// Once deployed, replace this with the public backend endpoint.
+// Example contract: POST /api/listing { url: "..." } -> {make,model,year,engine,power,gearbox,mileage,price}
+const API_ENDPOINT = "/api/listing";
+
+async function searchListing(){
+ const url=document.getElementById("listingUrl").value.trim();
+ const s=document.getElementById("status");
+ if(!url){s.className="status err";s.textContent="Ielīmē SS.COM sludinājuma saiti.";return}
+ if(!/^https?:\/\/([a-z0-9-]+\.)?ss\.(com|lv)\//i.test(url)){
+   s.className="status err";s.textContent="Šobrīd V3.9 paredzēts SS.COM / SS.LV sludinājuma saitei.";return;
+ }
+ const btn=document.getElementById("searchBtn");
+ s.className="status";s.textContent="Savienojos ar auto datu serveri…";
+ btn.disabled=true; btn.textContent="MEKLĒJU…";
+ try{
+   const r=await fetch(API_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok) throw new Error(d.error||"Neizdevās nolasīt sludinājumu.");
+   ["make","model","year","engine","power","gearbox","mileage","price"].forEach(k=>{
+      if(d[k]!==undefined && d[k]!==null && d[k]!=="") document.getElementById(k).value=d[k];
+   });
+   s.className="status ok";
+   s.textContent="✓ Sludinājuma dati nolasīti automātiski. Pārbaudi laukus un turpini ar analīzi.";
+   analyze();
+ }catch(e){
+   s.className="status err";
+   s.textContent="Neizdevās automātiski nolasīt: "+e.message+" Datus joprojām vari ievadīt manuāli.";
+ }finally{
+   btn.disabled=false; btn.textContent="🔎 MEKLĒT AUTO";
+ }
+}
+
+function v(id){return document.getElementById(id).value.trim()||"—"}
+function analyze(){
+ const r=document.getElementById("result"); r.classList.remove("hidden");
+ r.innerHTML=`
+ <h2>📋 ${v("make")} ${v("model")}</h2>
+ <div class="data">
+  <div class="metric"><small>Gads</small><b>${v("year")}</b></div>
+  <div class="metric"><small>Dzinējs</small><b>${v("engine")}</b></div>
+  <div class="metric"><small>⚡ Jauda</small><b>${v("power")} kW</b></div>
+  <div class="metric"><small>⚙️ Ātrumkārba</small><b>${v("gearbox")}</b></div>
+  <div class="metric"><small>Nobraukums</small><b>${v("mileage")} km</b></div>
+  <div class="metric"><small>Cena</small><b>€${v("price")}</b></div>
+ </div>
+ <section><h3>🔎 Ko pārbaudīt</h3><ul>
+  <li>Auksta dzinēja iedarbināšana, dūmi, trokšņi un nevienmērīga darbība.</li>
+  <li>Ātrumkārbas darbība un apkopes vēsture.</li>
+  <li>Dīzelim — DPF, EGR un emisiju sistēmas stāvoklis.</li>
+  <li>Piekare, bremzes, riepas un virsbūves bojājumi.</li>
+  <li>Servisa un nobraukuma vēsture.</li>
+ </ul></section>
+ <section><h3>💬 Jautājumi pārdevējam</h3><ul>
+  <li>Kas pēdējā laikā remontēts un vai ir servisa dokumenti?</li>
+  <li>Kad veikta pēdējā ātrumkārbas apkope?</li>
+  <li>Vai auto var apskatīt ar pilnīgi aukstu dzinēju?</li>
+  <li>Vai pārdevējs piekrīt neatkarīgai diagnostikai?</li>
+ </ul></section>
+ <button style="width:100%" onclick="window.print()">📄 SAGLABĀT PDF</button>`;
+ r.scrollIntoView({behavior:"smooth"});
+}
+</script>
+</body>
+</html>

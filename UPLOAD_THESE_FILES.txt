@@ -1,0 +1,11 @@
+Upload ALL files in this folder to the ROOT of one GitHub repository.
+
+Required:
+- index.html
+- server.js
+- ss-parser.js
+- package.json
+- render.yaml
+
+The other files are instructions/notes.
+Do not upload the ZIP file itself to Render. GitHub should contain the extracted files.
