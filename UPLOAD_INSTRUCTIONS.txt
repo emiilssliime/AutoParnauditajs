@@ -1,0 +1,38 @@
+AUTO PĀRBAUDĪTĀJS V5.3 — UPLOAD
+
+Kas mainīts:
+1. Auto ABC, iAuto un AUTODOC avotu kartītes vairs NEKAD nerāda lietotājam tehnisku tekstu par TAVILY_API_KEY.
+2. Ja meklēšanas serviss nav konfigurēts vai īslaicīgi nestrādā, lietotājs redz tikai:
+   “Papildu informācija pašlaik nav pieejama.”
+3. Manuālās ievades lauki sākuma lapā ir pilnīgi tukši — bez iepriekš aizpildītiem piemēriem.
+4. Degvielas/EV noteikšana izmanto tieši degvielas/dzinēja lauku, nevis nejaušu “electric” tekstu no sludinājuma lapas.
+5. Latvijas tirgus cenas modulis saglabāts.
+6. Versijas marķējums: V5.3.
+
+RENDER — SVARĪGI:
+Lai Auto ABC / iAuto / AUTODOC meklēšana dotu rezultātus, Render servisā jābūt Environment mainīgajam:
+
+Key:
+TAVILY_API_KEY
+
+Value:
+Tava Tavily API atslēga
+
+Render soļi:
+1. Atver Render Dashboard.
+2. Atver AutoParbauditajs Web Service.
+3. Environment.
+4. Add Environment Variable.
+5. Key = TAVILY_API_KEY
+6. Value = tava Tavily atslēga.
+7. Save Changes / Deploy.
+
+Atslēgu NEKAD neliec index.html, GitHub publiskajā kodā vai citā frontend failā.
+
+UPLOAD:
+1. Atarhivē ZIP.
+2. GitHub repozitorija root mapē aizvieto failus ar šiem failiem.
+3. Commit.
+4. Ļauj Render veikt redeploy.
+5. Pārbaudi /health — version jābūt 5.3.
+6. Pārbaudi vienu dīzeļa SS.COM sludinājumu un pārliecinies, ka tas netiek rādīts kā elektrisks.
