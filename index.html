@@ -3,224 +3,334 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auto Pārbaudītājs — V5.1</title>
+<title>Auto Pārbaudītājs — V5.2</title>
 <style>
+:root{
+  --bg:#f3f5f7;--card:#fff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;
+  --navy:#111827;--green:#eaf8ef;--green-ink:#16723a;--amber:#fff8e7;
+  --red:#fff0ee;--shadow:0 8px 30px rgba(17,24,39,.06);
+}
 *{box-sizing:border-box}
-:root{--bg:#f3f5f7;--card:#fff;--text:#18202a;--muted:#6b7280;--line:#e5e7eb;--dark:#111827;--green:#176b38;--greenbg:#eaf8ef;--amber:#8a5a00;--amberbg:#fff5d8;--red:#a12626;--redbg:#fff0f0;--blue:#245b9e;--bluebg:#edf5ff}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);margin:0;padding:18px;color:var(--text)}
-.wrap{max-width:900px;margin:auto}.card{background:var(--card);border-radius:20px;padding:22px;box-shadow:0 8px 30px #00000010;margin-bottom:14px}
-h1{margin:0 0 6px;font-size:30px}h2{margin:0 0 12px;font-size:21px}h3{margin:0 0 7px;font-size:17px}.sub,.muted{color:var(--muted)}
-.badge,.pill{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:750}.badge{background:#e8f7ee;color:#18723b;margin-bottom:14px}
-.urlrow{display:grid;grid-template-columns:1fr auto;gap:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-input,button{font:inherit;border-radius:12px;padding:14px}input{border:1px solid #d5dae0;width:100%;background:#fff}button{border:0;background:var(--dark);color:#fff;font-weight:750;cursor:pointer}
-button.secondary{background:#eef1f4;color:#1f2937}.full{width:100%;margin-top:12px}.hidden{display:none}
-.status{margin-top:12px;padding:12px;border-radius:12px;background:#f5f7f9;color:#4b5563}.status.ok{background:var(--greenbg);color:var(--green)}.status.err{background:var(--redbg);color:var(--red)}.status.work{background:var(--bluebg);color:var(--blue)}
-.data{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.metric{background:#f7f8fa;border-radius:14px;padding:13px;min-height:78px}.metric small{display:block;color:var(--muted);margin-bottom:5px}.metric b{font-size:17px;overflow-wrap:anywhere}
-section{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}.issue{border:1px solid var(--line);border-radius:15px;padding:15px;margin:10px 0;background:#fcfcfd}.issueTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.sev-high{background:#fde9e7;color:#8e1b1b}.sev-med{background:#fff5d8;color:#7c5400}.sev-low{background:#eef4ff;color:#245b9e}
-.source{padding:10px 0;border-bottom:1px solid #eee}.source:last-child{border-bottom:0}.source a{color:#174ea6;text-decoration:none;font-weight:650}.source small{display:block;color:var(--muted);margin-top:3px}
-.summary{background:#f7f8fa;border-radius:14px;padding:14px;line-height:1.5}
-.note{font-size:13px;color:var(--muted);line-height:1.45}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.sheet{display:grid;gap:8px}.sheetRow{display:grid;grid-template-columns:24px minmax(120px,.7fr) 1.5fr;gap:10px;align-items:start;border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:#fff}
-.box{width:18px;height:18px;border:2px solid #9aa3ad;border-radius:4px;margin-top:1px;background:#fff}.sheetTitle{font-weight:750}.sheetText{color:#4b5563;line-height:1.4}
-.sectionHint{font-size:13px;color:var(--muted);margin:-4px 0 10px}.compactBtn{width:auto;padding:9px 12px;margin-top:10px}
-@media(max-width:650px){.urlrow,.grid,.actions{grid-template-columns:1fr}.data{grid-template-columns:1fr 1fr}h1{font-size:26px}.issueTop{display:block}.sheetRow{grid-template-columns:22px 1fr}.sheetText{grid-column:2}}
-@media print{body{background:#fff;padding:0}.card{box-shadow:none}.no-print{display:none}.sheetRow{break-inside:avoid}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 18px 60px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.badge{font-size:12px;letter-spacing:.08em;font-weight:800;background:#e8edf5;padding:7px 10px;border-radius:999px}
+h1{font-size:30px;margin:0 0 6px}
+.sub{color:var(--muted);margin:0;line-height:1.45}
+.card{background:var(--card);border:1px solid #eef0f2;border-radius:22px;padding:22px;box-shadow:var(--shadow);margin:14px 0}
+.search{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:18px}
+input{width:100%;border:1px solid #d7dce2;border-radius:12px;padding:14px 15px;font-size:16px;background:white;outline:none}
+input:focus{border-color:#9aa5b1;box-shadow:0 0 0 3px rgba(17,24,39,.05)}
+button{border:0;border-radius:12px;padding:14px 18px;font-size:15px;font-weight:800;cursor:pointer}
+.primary{background:var(--navy);color:white}
+.secondary{background:#eef1f4;color:var(--ink)}
+.status{margin-top:12px;padding:12px 14px;border-radius:12px;background:#f5f7f9;color:#475569;font-size:14px}
+.status.ok{background:var(--green);color:var(--green-ink)}
+.status.err{background:var(--red);color:#a82d24}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.field label{display:block;color:var(--muted);font-size:13px;margin:0 0 6px}
+.field input{font-weight:700}
+.full{grid-column:1/-1}
+.actions{display:flex;gap:10px;margin-top:16px}
+.actions .primary{flex:1}
+.section-title{display:flex;align-items:center;gap:8px;font-size:25px;margin:0 0 14px}
+.vehicle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.metric{background:#f7f8fa;border-radius:15px;padding:16px}
+.metric .k{font-size:13px;color:var(--muted);margin-bottom:6px}
+.metric .v{font-size:19px;font-weight:800}
+.line{height:1px;background:var(--line);margin:20px 0}
+.summary{background:#f5f7f9;border-radius:13px;padding:14px;font-size:15px}
+.okbar{background:var(--green);color:var(--green-ink);padding:13px 14px;border-radius:13px;margin-bottom:12px}
+.risk{border:1px solid #dfe3e8;border-radius:16px;padding:16px;margin:10px 0}
+.risk h3{margin:0 0 8px;font-size:18px}
+.tag{display:inline-block;background:#fff0ed;color:#a62c24;font-weight:800;font-size:12px;padding:5px 8px;border-radius:999px;margin:3px 0 8px}
+.risk p{margin:6px 0;line-height:1.45}
+.checkrow{display:grid;grid-template-columns:28px 220px 1fr;align-items:start;gap:10px;border:1px solid #dfe3e8;border-radius:14px;padding:14px;margin:9px 0}
+.box{width:20px;height:20px;border:2px solid #aeb8c4;border-radius:5px;margin-top:1px}
+.checkrow b{font-size:16px}
+.checkrow span{color:#526071;line-height:1.45}
+.market-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.market-range{font-size:28px;font-weight:850;margin:5px 0}
+.market-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.smallstat{background:#f7f8fa;border-radius:13px;padding:12px}
+.smallstat .k{font-size:12px;color:var(--muted)}
+.smallstat .v{font-weight:800;margin-top:4px}
+.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.source{border:1px solid #dfe3e8;border-radius:16px;padding:16px}
+.source h3{margin:0 0 7px}
+.source p{font-size:14px;color:#526071;line-height:1.45}
+.source a{color:#173a68;text-decoration:none;font-weight:700}
+.result-link{display:block;border-top:1px solid var(--line);padding:10px 0;font-size:13px}
+.source-status{font-size:12px;border-radius:999px;padding:5px 8px;background:#f0f2f4;display:inline-block;margin-bottom:8px}
+.muted{color:var(--muted)}
+.hidden{display:none!important}
+.footer-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px}
+@media(max-width:800px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .vehicle-grid{grid-template-columns:repeat(2,1fr)}
+  .source-grid{grid-template-columns:1fr}
+  .market-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){
+  .wrap{padding:16px 10px 42px}.card{padding:16px;border-radius:17px}
+  h1{font-size:25px}.search{grid-template-columns:1fr}.grid,.vehicle-grid{grid-template-columns:1fr}
+  .checkrow{grid-template-columns:26px 1fr}.checkrow span{grid-column:2}
+  .actions{flex-direction:column}.section-title{font-size:21px}
+}
+@media print{
+  body{background:white}.wrap{max-width:none;padding:0}.card{box-shadow:none;break-inside:avoid}
+  .no-print,.search,.actions{display:none!important}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="top">
+    <div><div class="badge">V5.2 • AUTO PĀRBAUDE</div></div>
+  </div>
+
   <div class="card">
-    <span class="badge">V5.1 • AUTO PĀRBAUDE</span>
     <h1>🚗 Auto Pārbaudītājs</h1>
-    <p class="sub">Ielīmē SS.COM sludinājuma saiti. Auto dati un pārbaudes punkti tiek pielāgoti konkrētajam modelim, dzinējam, kārbai un nobraukumam.</p>
-    <div class="urlrow">
-      <input id="listingUrl" type="url" placeholder="https://www.ss.com/msg/lv/transport/cars/...">
-      <button onclick="searchListing()">🔎 MEKLĒT AUTO</button>
+    <p class="sub">Ielīmē SS.COM sludinājuma saiti. Auto dati, pārbaudes punkti, Latvijas avotu meklēšana un tirgus cena tiek pielāgota konkrētajam auto.</p>
+    <div class="search no-print">
+      <input id="ssUrl" placeholder="https://www.ss.com/msg/lv/transport/cars/...">
+      <button class="primary" id="searchBtn">🔎 MEKLĒT AUTO</button>
     </div>
-    <div id="status" class="status">Gatavs. Ielīmē SS.COM saiti.</div>
+    <div class="status" id="status">Gatavs. Ielīmē SS.COM saiti.</div>
   </div>
 
   <div class="card">
-    <h2>Auto dati</h2>
+    <h2 class="section-title">Auto dati</h2>
     <div class="grid">
-      <input id="make" placeholder="Marka (BMW)">
-      <input id="model" placeholder="Modelis (320d)">
-      <input id="year" placeholder="Gads (2015)" type="number">
-      <input id="engine" placeholder="Dzinējs / degviela">
-      <input id="power" placeholder="Jauda (kW)">
-      <input id="gearbox" placeholder="Ātrumkārba">
-      <input id="mileage" placeholder="Nobraukums (km)">
-      <input id="price" placeholder="Cena (€)">
+      <div class="field"><label>Marka</label><input id="make" placeholder="Peugeot"></div>
+      <div class="field"><label>Modelis</label><input id="model" placeholder="308"></div>
+      <div class="field"><label>Gads</label><input id="year" inputmode="numeric" placeholder="2016"></div>
+      <div class="field"><label>Dzinējs / degviela</label><input id="engine" placeholder="1.6 dīzelis"></div>
+      <div class="field"><label>⚡ Jauda (kW)</label><input id="power" inputmode="numeric" placeholder="88"></div>
+      <div class="field"><label>⚙️ Ātrumkārba</label><input id="gearbox" placeholder="Manuāla"></div>
+      <div class="field"><label>Nobraukums (km)</label><input id="mileage" inputmode="numeric" placeholder="137685"></div>
+      <div class="field"><label>Cena (€)</label><input id="price" inputmode="numeric" placeholder="4450"></div>
     </div>
-    <button class="full" onclick="analyze()">ANALIZĒT AUTO</button>
+    <div class="actions no-print">
+      <button class="primary" id="analyzeBtn">ANALIZĒT AUTO</button>
+      <button class="secondary" onclick="window.print()">Saglabāt / drukāt PDF</button>
+    </div>
   </div>
 
-  <div id="result" class="card hidden"></div>
+  <div id="results" class="hidden">
+    <div class="card">
+      <h2 class="section-title">📋 <span id="vehicleTitle">Auto</span></h2>
+      <div class="vehicle-grid" id="vehicleGrid"></div>
+      <div class="line"></div>
+      <h2 class="section-title">Auto pārbaudes plāns</h2>
+      <div class="okbar">✓ Pārbaudes plāns gatavs.</div>
+      <div class="summary" id="vehicleSummary"></div>
+
+      <div class="line"></div>
+      <h2 class="section-title">⚠️ Tipiskie riski šim auto</h2>
+      <div id="risks"></div>
+
+      <div class="line"></div>
+      <h2 class="section-title">🛣️ Pie šī nobraukuma</h2>
+      <div id="mileageChecks"></div>
+
+      <div class="line"></div>
+      <h2 class="section-title">💬 Ko noskaidrot pie pārdevēja</h2>
+      <p class="muted">Īsi punkti, ko izrunāt pirms braukt skatīties auto.</p>
+      <div id="sellerChecks"></div>
+    </div>
+
+    <div class="card" id="marketCard">
+      <div class="market-head">
+        <div>
+          <h2 class="section-title">💶 Latvijas tirgus cena</h2>
+          <div class="muted" id="marketSub">SS.COM salīdzinājums</div>
+        </div>
+      </div>
+      <div id="marketBody"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">🇱🇻 Latvijas avoti</h2>
+      <p class="sub">Katrs avots tiek meklēts atsevišķi. Forumu ieraksti ir lietotāju pieredze, nevis pārbaudīts tehniskais fakts.</p>
+      <div class="source-grid" id="sources" style="margin-top:14px"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-const val=id=>$(id).value.trim();
-const vehicle=()=>({make:val("make"),model:val("model"),year:val("year"),engine:val("engine"),power:val("power"),gearbox:val("gearbox"),mileage:val("mileage"),price:val("price"),listingUrl:val("listingUrl")});
-const withUnit=(x,u)=>!x?"—":String(x).toLowerCase().includes(u.toLowerCase())?x:`${x} ${u}`;
+let currentVehicle = { sourceUrl: "" };
 
-function fill(d){
-  ["make","model","year","engine","power","gearbox","mileage","price"].forEach(k=>{
-    if(d[k]!==undefined&&d[k]!==null&&String(d[k]).trim()!=="")$(k).value=d[k]
-  })
-}
-function setStatus(text,kind=""){$("status").className="status"+(kind?` ${kind}`:"");$("status").textContent=text}
+const $ = (id) => document.getElementById(id);
+const euro = (n) => n ? new Intl.NumberFormat("lv-LV").format(n) + " €" : "—";
+const km = (n) => n ? new Intl.NumberFormat("lv-LV").format(n) + " km" : "—";
+const safe = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
-async function searchListing(){
-  const url=val("listingUrl");
-  if(!url){setStatus("Ielīmē SS.COM sludinājuma saiti.","err");return}
-  if(!/^https?:\/\/([a-z0-9-]+\.)?ss\.(com|lv)\//i.test(url)){setStatus("Saitei jābūt no SS.COM vai SS.LV.","err");return}
-  setStatus("Nolasu sludinājuma datus…","work");
-  try{
-    const r=await fetch("/api/listing",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||"Neizdevās nolasīt sludinājumu");
-    fill(d);
-    setStatus("✓ Sludinājuma dati atrasti. Gatavoju pārbaudes plānu…","ok");
-    await analyze();
-  }catch(e){setStatus("Neizdevās importēt: "+e.message,"err")}
+function setStatus(text, type="") {
+  $("status").className = "status" + (type ? " " + type : "");
+  $("status").textContent = text;
 }
 
-function baseHtml(v){
-  return `<h2>📋 ${esc(v.make||"Auto")} ${esc(v.model||"")}</h2>
-  <div class="data">
-    <div class="metric"><small>Gads</small><b>${esc(v.year||"—")}</b></div>
-    <div class="metric"><small>Dzinējs</small><b>${esc(v.engine||"—")}</b></div>
-    <div class="metric"><small>⚡ Jauda</small><b>${esc(withUnit(v.power,"kW"))}</b></div>
-    <div class="metric"><small>⚙️ Ātrumkārba</small><b>${esc(v.gearbox||"—")}</b></div>
-    <div class="metric"><small>Nobraukums</small><b>${esc(withUnit(v.mileage,"km"))}</b></div>
-    <div class="metric"><small>Cena</small><b>${v.price?`€${esc(v.price)}`:"—"}</b></div>
-  </div>
-  <section><h2>Auto pārbaudes plāns</h2><div id="intelStatus" class="status work">Apkopoju šim auto svarīgākos pārbaudes punktus…</div><div id="intel"></div></section>`;
+function getVehicleFromForm() {
+  const engine = $("engine").value.trim();
+  return {
+    make: $("make").value.trim(),
+    model: $("model").value.trim(),
+    year: Number($("year").value) || null,
+    engine,
+    fuelType: currentVehicle.fuelType || "unknown",
+    powerKw: Number($("power").value) || null,
+    gearbox: $("gearbox").value.trim(),
+    transmissionType: currentVehicle.transmissionType || "unknown",
+    mileageKm: Number(String($("mileage").value).replace(/\D/g,"")) || null,
+    priceEur: Number(String($("price").value).replace(/\D/g,"")) || null,
+    bodyType: currentVehicle.bodyType || "",
+    sourceUrl: currentVehicle.sourceUrl || $("ssUrl").value.trim()
+  };
 }
 
-async function analyze(){
-  const v=vehicle();
-  if(!v.make&&!v.model&&!v.engine){setStatus("Vispirms importē SS.COM sludinājumu vai ievadi auto datus.","err");return}
-  $("result").classList.remove("hidden");
-  $("result").innerHTML=baseHtml(v);
-  $("result").scrollIntoView({behavior:"smooth",block:"start"});
-  try{
-    const r=await fetch("/api/intelligence",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(v)});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||"Intelligence unavailable");
-    renderIntel(d,v);
-  }catch(e){
-    $("intelStatus").className="status";
-    $("intelStatus").textContent="Pārbaudes plāns sagatavots no auto datiem.";
-    renderFallback(v);
+function fillVehicle(v) {
+  currentVehicle = v;
+  $("make").value = v.make || "";
+  $("model").value = v.model || "";
+  $("year").value = v.year || "";
+  $("engine").value = v.engine || "";
+  $("power").value = v.powerKw || "";
+  $("gearbox").value = v.gearbox || "";
+  $("mileage").value = v.mileageKm || "";
+  $("price").value = v.priceEur || "";
+}
+
+function renderCheckRows(items) {
+  return (items || []).map(x => `
+    <div class="checkrow">
+      <div class="box"></div>
+      <b>${safe(x.title)}</b>
+      <span>${safe(x.text)}</span>
+    </div>`).join("");
+}
+
+function renderAnalysis(data) {
+  const v = data.vehicle;
+  currentVehicle = {...currentVehicle, ...v};
+
+  $("results").classList.remove("hidden");
+  $("vehicleTitle").textContent = [v.make, v.model].filter(Boolean).join(" ") || "Auto";
+  const metrics = [
+    ["Gads", v.year || "—"],
+    ["Dzinējs", v.engine || "—"],
+    ["⚡ Jauda", v.powerKw ? v.powerKw + " kW" : "—"],
+    ["⚙️ Ātrumkārba", v.gearbox || "—"],
+    ["Nobraukums", km(v.mileageKm)],
+    ["Cena", euro(v.priceEur)]
+  ];
+  $("vehicleGrid").innerHTML = metrics.map(([k,val]) => `<div class="metric"><div class="k">${safe(k)}</div><div class="v">${safe(val)}</div></div>`).join("");
+  $("vehicleSummary").innerHTML = `<b>Auto:</b> ${safe([v.make,v.model,v.year,v.engine,v.gearbox].filter(Boolean).join(" • "))}`;
+
+  $("risks").innerHTML = (data.plan?.risks || []).map(r => `
+    <div class="risk">
+      <h3>${safe(r.title)}</h3>
+      <span class="tag">${safe(r.importance)}</span>
+      <p><b>Pārbaude:</b> ${safe(r.check)}</p>
+      <p><b>Pazīmes:</b> ${safe(r.signs)}</p>
+    </div>`).join("");
+
+  $("mileageChecks").innerHTML = renderCheckRows(data.plan?.mileage || []);
+  $("sellerChecks").innerHTML = renderCheckRows(data.plan?.seller || []);
+
+  renderMarket(data.market);
+  renderSources(data.sources || []);
+}
+
+function renderMarket(m) {
+  if (!m || !m.available) {
+    $("marketBody").innerHTML = `<div class="status">${safe(m?.reason || "Tirgus dati nav pieejami.")}</div>`;
+    return;
   }
-}
+  const diffText = m.diffPct === null || m.diffPct === undefined
+    ? "Sludinājuma cena nav ievadīta."
+    : `${m.diffPct > 0 ? "+" : ""}${m.diffPct}% pret mediānu — ${safe(m.position || "")}.`;
 
-function issueHtml(i){
-  const sev=i.severity==="high"?"Svarīgi":i.severity==="low"?"Papildus":"Pārbaudīt";
-  return `<div class="issue">
-    <div class="issueTop"><div><h3>${esc(i.title)}</h3><div class="muted">${esc(i.reason||"")}</div></div></div>
-    <div class="tags"><span class="pill sev-${esc(i.severity||"med")}">${sev}</span>${i.sourceCount?`<span class="pill">${i.sourceCount} avoti</span>`:""}</div>
-    ${i.check?`<div><b>Pārbaude:</b> ${esc(i.check)}</div>`:""}
-    ${i.symptoms?`<div style="margin-top:6px"><b>Pazīmes:</b> ${esc(i.symptoms)}</div>`:""}
-  </div>`;
-}
-
-function sourceHtml(s){
-  return `<div class="source"><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title||s.domain||"Avots")}</a><small>${esc(s.domain||"")}${s.type?` • ${esc(s.type)}`:""}</small></div>`;
-}
-
-function sheetRow(title,text,extraClass=""){
-  return `<div class="sheetRow ${extraClass}"><span class="box"></span><div class="sheetTitle">${esc(title)}</div><div class="sheetText">${esc(text)}</div></div>`;
-}
-
-function sellerRow(text){
-  const parts=String(text||"").split(/\s+—\s+/);
-  const title=parts.shift()||"Pārdevējam";
-  const detail=parts.join(" — ")||"Noskaidrot pirms apskates.";
-  return sheetRow(title,detail);
-}
-
-function renderIntel(d,v){
-  const st=$("intelStatus");
-  if(d.researchStatus==="live" && d.sources?.length){
-    st.className="status ok";
-    st.textContent=`✓ Pārbaudes plāns gatavs. Papildus pārbaudīti ${d.sources.length} ārējie avoti.`;
-  }else{
-    st.className="status ok";
-    st.textContent="✓ Pārbaudes plāns gatavs.";
-  }
-
-  let html="";
-  if(d.fingerprint) html+=`<div class="summary"><b>Auto:</b> ${esc(d.fingerprint)}</div>`;
-
-  if(d.market){
-    const pos=d.market.position?` • ${esc(d.market.position)}`:"";
-    html+=`<section><h2>💶 Tirgus cena Latvijā</h2>
-      <div class="summary">
-        <b>Orientējošs diapazons:</b> €${esc(d.market.low)}–€${esc(d.market.high)}<br>
-        <b>Mediāna:</b> €${esc(d.market.median)}${pos}<br>
-        <span class="note">Atrasti ${esc(d.market.sampleCount)} cenu piemēri SS.COM meklēšanas rezultātos. Šis ir orientieris, nevis vērtējums.</span>
-      </div>
-    </section>`;
-  }
-
-  html+=`<section><h2>⚠️ Tipiskie riski šim auto</h2>${(d.issues||[]).map(issueHtml).join("")||"<p class='muted'>Papildu modelim raksturīgi riski nav identificēti.</p>"}</section>`;
-
-  if(d.mileageChecks?.length){
-    html+=`<section><h2>🛣️ Pie šī nobraukuma</h2><div class="sheet">${d.mileageChecks.map((x,i)=>sheetRow(`Punkts ${i+1}`,x)).join("")}</div></section>`;
-  }
-
-  if(d.sellerQuestions?.length){
-    html+=`<section><h2>💬 Ko noskaidrot pie pārdevēja</h2>
-      <p class="sectionHint">Īsi punkti, ko izrunāt pirms braukt skatīties auto.</p>
-      <div id="sellerQ" class="sheet">${d.sellerQuestions.map(sellerRow).join("")}</div>
-      <button class="secondary compactBtn no-print" onclick="copyQuestions()">📋 KOPĒT</button>
-    </section>`;
-  }
-
-  if(d.sources?.length){
-    html+=`<section><h2>🔗 Avoti</h2><p class="note">Pārbaudē tiek meklēta informācija arī Auto ABC, iAuto un AUTODOC. Forumu ieraksti ir īpašnieku pieredze — tos izmanto kā papildu pārbaudes virzienus, nevis kā pierādījumu, ka konkrētajam auto ir defekts.</p>${d.sources.map(sourceHtml).join("")}</section>`;
-  }
-
-  html+=`<section><h2>🔧 Pirms pirkuma</h2>
-    <p class="sectionHint">Atzīmē apskates laikā.</p>
-    <div class="sheet">
-      ${sheetRow("Dokumenti","Servisa vēsture, rēķini un nobraukuma secība.")}
-      ${sheetRow("Auksts starts","Motoru pārbaudīt pilnīgi aukstu; klausīties trokšņus un vērot dūmus.")}
-      ${sheetRow("Diagnostika","OBD kļūdas, kļūdu vēsture un readiness statusi.")}
-      ${sheetRow("Testa brauciens","Kārba, bremzes, stūre, vibrācijas, trokšņi un jaudas padeve.")}
-      ${sheetRow("Apakša / virsbūve","Noplūdes, korozija, riepas, piekare un remonta pazīmes.")}
-      ${sheetRow("Servisa pārbaude","Ja rodas šaubas — neatkarīga pirmspirkuma pārbaude.")}
+  $("marketBody").innerHTML = `
+    <div class="market-range">${euro(m.minEur)} – ${euro(m.maxEur)}</div>
+    <div class="muted">${safe(m.note || "")}</div>
+    <div class="market-stats">
+      <div class="smallstat"><div class="k">Salīdzināmi auto</div><div class="v">${safe(m.count)}</div></div>
+      <div class="smallstat"><div class="k">Mediāna</div><div class="v">${euro(m.medianEur)}</div></div>
+      <div class="smallstat"><div class="k">Vidējā cena</div><div class="v">${euro(m.averageEur)}</div></div>
+      <div class="smallstat"><div class="k">Šis sludinājums</div><div class="v">${euro(m.askingPriceEur)}</div></div>
     </div>
-  </section>`;
-
-  html+=`<div class="actions no-print"><button onclick="window.print()">📄 SAGLABĀT PDF</button><button class="secondary" onclick="analyze()">↻ ATJAUNOT</button></div>`;
-  $("intel").innerHTML=html;
+    <div class="status ${Math.abs(m.diffPct || 0) < 8 ? 'ok' : ''}">${safe(diffText)}</div>
+    ${m.categoryUrl ? `<div style="margin-top:10px"><a href="${safe(m.categoryUrl)}" target="_blank" rel="noopener">Atvērt SS.COM modeļa tirgu ↗</a></div>` : ""}
+  `;
 }
 
-function renderFallback(v){
-  $("intel").innerHTML=`<section><h2>🔎 Pamata pārbaude</h2>
-    <div class="sheet">
-      ${sheetRow("Dzinējs","Auksts starts, noplūdes, trokšņi un kļūdas.")}
-      ${sheetRow("Ātrumkārba","Darbība aukstā un siltā režīmā, apkopes vēsture.")}
-      ${sheetRow("Piekare / bremzes","Klaboņa, vibrācijas, riepas un bremzēšana.")}
-      ${sheetRow("Vēsture","Servisa ieraksti, rēķini un nobraukuma secība.")}
-    </div>
-  </section>`;
+function renderSources(sources) {
+  $("sources").innerHTML = sources.map(src => {
+    const results = (src.results || []).slice(0,3);
+    const status = src.available
+      ? (results.length ? `Atrasti ${results.length} rezultāti` : "Rezultāti nav atrasti")
+      : (src.reason || "Nav pieejams");
+    return `
+      <div class="source">
+        <h3>${safe(src.name)}</h3>
+        <div class="source-status">${safe(status)}</div>
+        <p>${safe(src.note)}</p>
+        ${results.map(r => `<a class="result-link" href="${safe(r.url)}" target="_blank" rel="noopener">${safe(r.title || "Atvērt rezultātu")} ↗<br><span class="muted">${safe((r.snippet || "").slice(0,180))}</span></a>`).join("")}
+        <a href="${safe(src.home)}" target="_blank" rel="noopener">Atvērt ${safe(src.name)} ↗</a>
+      </div>`;
+  }).join("");
 }
 
-async function copyQuestions(){
-  const q=[...document.querySelectorAll("#sellerQ .sheetRow")].map(x=>{
-    const title=x.querySelector(".sheetTitle")?.innerText||"";
-    const text=x.querySelector(".sheetText")?.innerText||"";
-    return `${title} — ${text}`.trim();
-  }).join("\n");
-  try{await navigator.clipboard.writeText(q);alert("Punkti nokopēti!")}catch{alert(q)}
+async function analyzeVehicle() {
+  const vehicle = getVehicleFromForm();
+  setStatus("Analizēju auto, Latvijas avotus un SS.COM tirgus cenu…");
+  $("analyzeBtn").disabled = true;
+  try {
+    const res = await fetch("/api/analyze", {
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body: JSON.stringify({ vehicle })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || "Analīze neizdevās.");
+    renderAnalysis(data);
+    setStatus(`V5.2 analīze gatava: ${[data.vehicle.make,data.vehicle.model].filter(Boolean).join(" ")}.`, "ok");
+  } catch (e) {
+    setStatus(e.message || "Analīze neizdevās.", "err");
+  } finally {
+    $("analyzeBtn").disabled = false;
+  }
 }
+
+$("searchBtn").addEventListener("click", async () => {
+  const url = $("ssUrl").value.trim();
+  if (!url) return setStatus("Ielīmē SS.COM sludinājuma saiti.", "err");
+  setStatus("Nolasu SS.COM sludinājumu…");
+  $("searchBtn").disabled = true;
+  try {
+    const res = await fetch("/api/listing", {
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || "Sludinājuma nolasīšana neizdevās.");
+    fillVehicle(data.vehicle);
+    setStatus(`SS.COM dati nolasīti. Degviela: ${data.vehicle.fuelType || "nav noteikta"}.`, "ok");
+    await analyzeVehicle();
+  } catch (e) {
+    setStatus(e.message || "Sludinājuma nolasīšana neizdevās.", "err");
+  } finally {
+    $("searchBtn").disabled = false;
+  }
+});
+
+$("analyzeBtn").addEventListener("click", analyzeVehicle);
+
+// If user manually edits the engine, force backend to recalculate fuel from that field.
+$("engine").addEventListener("input", () => { currentVehicle.fuelType = "unknown"; });
+$("gearbox").addEventListener("input", () => { currentVehicle.transmissionType = "unknown"; });
 </script>
 </body>
 </html>

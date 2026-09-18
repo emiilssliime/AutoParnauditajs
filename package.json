@@ -1,17 +1,17 @@
 {
   "name": "auto-parbauditajs",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "private": true,
-  "description": "SS.COM used-car import + Latvian-source vehicle research + market-price snapshot",
+  "description": "Auto Parbauditajs V5.2 - SS.COM parser, Latvia source research, market price snapshot",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   },
   "dependencies": {
-    "cheerio": "^1.0.0",
-    "express": "^4.21.2"
+    "cheerio": "^1.1.2",
+    "express": "^5.1.0"
   }
 }
