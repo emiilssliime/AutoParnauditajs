@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f3f5f7">
-  <title>Auto Pārbaudītājs — V5.3</title>
+  <title>Auto Pārbaudītājs — V5.4</title>
   <style>
     :root{--ink:#111827;--muted:#667085;--line:#dfe4ea;--card:#fff;--bg:#f3f5f7;--soft:#f7f8fa;--accent:#0d3b66;--ok:#147a42;--warn:#8a5a00}
     *{box-sizing:border-box}
@@ -37,9 +37,12 @@
     .fact small,.metric small{display:block;color:#667085;margin-bottom:5px}.fact b,.metric b{font-size:17px}
     .marketBig{font-size:34px;font-weight:850;letter-spacing:-.03em;margin:4px 0}
     .sources{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
-    .source{border:1px solid var(--line);border-radius:17px;padding:16px;min-height:210px;display:flex;flex-direction:column}
+    .source{border:1px solid var(--line);border-radius:17px;padding:16px;min-height:240px;display:flex;flex-direction:column}
     .source .msg{font-size:14px;color:#667085;background:#f2f4f7;padding:8px 10px;border-radius:999px;display:inline-block;align-self:flex-start;margin:6px 0 12px}
-    .source ul{padding-left:18px;margin:4px 0 12px}.source li{margin:7px 0;line-height:1.35}
+    .sourceResults{display:grid;gap:10px;margin:8px 0 14px}
+    .sourceResult{background:#f8fafc;border:1px solid #e8edf2;border-radius:12px;padding:11px}
+    .sourceResult a{display:block;margin-bottom:5px}
+    .sourceResult p{font-size:13px;line-height:1.45;color:#5d6878;margin:0}
     a{color:#143e6b;font-weight:750;text-decoration:none}a:hover{text-decoration:underline}
     .source a.home{margin-top:auto}
     .notice{background:#fff8e8;color:#6d4b00;border:1px solid #f3dfaa;border-radius:14px;padding:13px 14px;margin-top:14px}
@@ -55,7 +58,7 @@
         <h1>🚗 Auto Pārbaudītājs</h1>
         <div class="muted">Auto pārbaude pirms pirkuma — SS.COM dati, tirgus cena un Latvijas avoti.</div>
       </div>
-      <div class="version">V5.3</div>
+      <div class="version">V5.4</div>
     </div>
 
     <div class="tabs">
@@ -66,7 +69,7 @@
     <div id="linkPanel" class="panel active">
       <label for="listingUrl">SS.COM sludinājuma saite</label>
       <div class="urlrow">
-        <input id="listingUrl" type="url" autocomplete="off">
+        <input id="listingUrl" type="url" autocomplete="off" placeholder="https://www.ss.com/msg/lv/transport/cars/...">
         <button class="btn primary" onclick="loadListing()">MEKLĒT AUTO</button>
       </div>
       <div id="linkStatus" class="status"></div>
@@ -100,13 +103,13 @@
 
   <section id="marketCard" class="card hidden">
     <h2>💶 Latvijas tirgus cena</h2>
-    <div class="muted">SS.COM salīdzinājums</div>
+    <div class="muted">SS.COM salīdzinājums ar reāliem šī modeļa sludinājumu cenu laukiem.</div>
     <div id="marketContent"></div>
   </section>
 
   <section id="sourcesCard" class="card hidden">
     <h2>🇱🇻 Latvijas avoti</h2>
-    <p class="muted">Katrs avots tiek meklēts atsevišķi. Forumu ieraksti ir lietotāju pieredze, nevis pārbaudīts tehniskais fakts.</p>
+    <p class="muted">Auto ABC, iAuto un AUTODOC rezultāti ar īsiem satura fragmentiem. Forumu ieraksti ir lietotāju pieredze, nevis pārbaudīts tehniskais fakts.</p>
     <div id="sources" class="sources"></div>
   </section>
 </div>
@@ -130,6 +133,27 @@ function setStatus(text, kind=''){
 }
 function field(id){ return document.getElementById(id).value.trim(); }
 function setField(id,v){ document.getElementById(id).value = v || ''; }
+function parseMoney(v){
+  const m = String(v ?? '').replace(/\u00a0/g,' ').match(/(\d[\d\s.,]*?)\s*€/);
+  const raw = m ? m[1] : String(v ?? '');
+  const n = Number(raw.replace(/[^\d]/g,''));
+  return Number.isFinite(n) ? n : 0;
+}
+function euro(n){ return Number(n).toLocaleString('lv-LV') + ' €'; }
+function displayPrice(v){
+  const n = parseMoney(v);
+  return n ? euro(n) : (v || '—');
+}
+function displayName(car){
+  const make = String(car.make || '').trim();
+  const model = String(car.model || '').trim();
+  if(!make) return model || 'Auto dati';
+  if(!model) return make;
+  const nm = make.toLowerCase();
+  const nd = model.toLowerCase();
+  if(nm === nd || nm.endsWith(' ' + nd)) return make;
+  return `${make} ${model}`;
+}
 
 async function loadListing(){
   const url = field('listingUrl');
@@ -137,12 +161,18 @@ async function loadListing(){
   setStatus('Nolasu sludinājuma datus…');
   try{
     const r = await fetch('/api/listing', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url})
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({url})
     });
     const data = await r.json();
     if(!r.ok) throw new Error(data.error || 'Neizdevās nolasīt sludinājumu.');
     currentCar = data.car;
-    for(const k of ['make','model','year','engine','fuel','power','gearbox','mileage','price']) setField(k, data.car[k]);
+
+    for(const k of ['make','model','year','engine','fuel','power','gearbox','mileage','price']){
+      setField(k, data.car[k]);
+    }
+
     renderCar(data.car);
     renderPlan(data.car);
     renderMarket(data.market);
@@ -159,12 +189,12 @@ function analyzeManual(){
     fuel:field('fuel'), power:field('power'), gearbox:field('gearbox'),
     mileage:field('mileage'), price:field('price')
   };
-  const f = (currentCar.fuel || '').toLowerCase();
+  const f = (currentCar.fuel || currentCar.engine || '').toLowerCase();
   currentCar.classification = {
     isElectric:/elektr|electric|^ev$/.test(f),
     isHybrid:/hibr|hybrid|phev|plug/.test(f),
-    isDiesel:/dīzel|dizel|diesel/.test(f),
-    isPetrol:/benz|petrol|gasoline/.test(f)
+    isDiesel:/dīzel|dizel|diesel|hdi|tdi|dci/.test(f),
+    isPetrol:/benz|petrol|gasoline|puretech/.test(f)
   };
   renderCar(currentCar);
   renderPlan(currentCar);
@@ -174,10 +204,15 @@ function analyzeManual(){
 
 function renderCar(car){
   document.getElementById('carCard').classList.remove('hidden');
-  document.getElementById('carTitle').textContent = [car.make,car.model].filter(Boolean).join(' ') || 'Auto dati';
+  document.getElementById('carTitle').textContent = displayName(car);
   const data = [
-    ['Gads',car.year],['Dzinējs',car.engine],['Degviela',car.fuel],['Jauda',car.power],
-    ['Ātrumkārba',car.gearbox],['Nobraukums',car.mileage],['Cena',car.price]
+    ['Gads',car.year],
+    ['Dzinējs',car.engine],
+    ['Degviela',car.fuel],
+    ['Jauda',car.power],
+    ['Ātrumkārba',car.gearbox],
+    ['Nobraukums',car.mileage],
+    ['Cena',displayPrice(car.price)]
   ];
   document.getElementById('facts').innerHTML = data.map(([a,b]) =>
     `<div class="fact"><small>${esc(a)}</small><b>${esc(b || '—')}</b></div>`
@@ -199,28 +234,31 @@ function renderPlan(car){
   items.push(['Ātrumkārba','Pārbaudi pārslēgšanos aukstā un siltā režīmā un apkopes pierādījumus.']);
   items.push(['Nobraukums un servisa vēsture','Salīdzini nobraukumu ar rēķiniem, apskatēm un servisa ierakstiem.']);
   items.push(['Piekare, bremzes un virsbūve','Testa braucienā klausies trokšņus un pārbaudi riepas, bremzes, koroziju un remonta pēdas.']);
-
   document.getElementById('planCard').classList.remove('hidden');
   document.getElementById('plan').innerHTML = items.map(([t,d]) =>
     `<div style="padding:12px 0;border-top:1px solid #eef0f2"><b>${esc(t)}</b><div class="muted" style="margin-top:5px">${esc(d)}</div></div>`
   ).join('');
 }
 
-function euro(n){ return Number(n).toLocaleString('lv-LV') + ' €'; }
-
 function renderMarket(m){
   const card = document.getElementById('marketCard');
-  if(!m){ card.classList.add('hidden'); return; }
+  if(!m || !m.count){ card.classList.add('hidden'); return; }
+
   card.classList.remove('hidden');
   const diff = m.differencePercent;
   let note = '';
   if(diff !== null){
-    if(diff < 0) note = `${Math.abs(diff)}% zem tirgus mediānas.`;
-    else if(diff > 0) note = `${diff}% virs tirgus mediānas.`;
-    else note = 'Cena atbilst tirgus mediānai.';
+    if(diff < 0) note = `${Math.abs(diff)}% zem salīdzināmo sludinājumu mediānas.`;
+    else if(diff > 0) note = `${diff}% virs salīdzināmo sludinājumu mediānas.`;
+    else note = 'Cena atbilst salīdzināmo sludinājumu mediānai.';
   }
+  const yearText = m.yearMin && m.yearMax
+    ? (m.yearMin === m.yearMax ? `${m.yearMin}. gada auto` : `${m.yearMin}–${m.yearMax}. gada auto`)
+    : 'šī modeļa auto';
+
   document.getElementById('marketContent').innerHTML = `
     <div class="marketBig">${euro(m.min)} – ${euro(m.max)}</div>
+    <div class="muted" style="margin-bottom:12px">Salīdzinājums: ${esc(yearText)}. Acīmredzami cenu izlecēji tiek atmesti.</div>
     <div class="facts">
       <div class="metric"><small>Salīdzināmi auto</small><b>${esc(m.count)}</b></div>
       <div class="metric"><small>Mediāna</small><b>${euro(m.median)}</b></div>
@@ -237,20 +275,24 @@ async function loadSources(car){
   card.classList.remove('hidden');
   const box = document.getElementById('sources');
   box.innerHTML = sourceLoading('Auto ABC') + sourceLoading('iAuto') + sourceLoading('AUTODOC.lv');
+
   try{
     const r = await fetch('/api/sources', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({car})
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({car})
     });
     const data = await r.json();
-    if(!r.ok) throw new Error();
+    if(!r.ok) throw new Error(data.error || 'Avotu meklēšana neizdevās.');
+
     box.innerHTML = [
-      renderSource(data.sources.autoabc,'Latvijas tehniskie dati, cenas, lietotāju atsauksmes un reālais patēriņš.'),
-      renderSource(data.sources.iauto,'Latvijas autovadītāju foruma pieredze un konkrētu problēmu diskusijas.'),
-      renderSource(data.sources.autodoc,'Modeļu problēmu un vājo vietu raksti.')
+      renderSource(data.sources.autoabc,'Tehniskie dati, cenas, uzticamība, īpašnieku atsauksmes un reālais patēriņš.'),
+      renderSource(data.sources.iauto,'Latvijas autovadītāju foruma pieredze, testi un diskusijas par konkrētām problēmām.'),
+      renderSource(data.sources.autodoc,'Modeļa biežākie defekti, problēmas un vājās vietas.')
     ].join('');
   }catch{
     box.innerHTML = [
-      fallbackSource('Auto ABC','https://www.autoabc.lv/'),
+      fallbackSource('Auto ABC','https://www.auto-abc.lv/'),
       fallbackSource('iAuto','https://iauto.lv/'),
       fallbackSource('AUTODOC.lv','https://www.autodoc.lv/info/')
     ].join('');
@@ -261,24 +303,28 @@ function sourceLoading(name){
   return `<div class="source"><h3>${esc(name)}</h3><div class="msg">Meklēju informāciju…</div></div>`;
 }
 function fallbackSource(name,home){
-  return `<div class="source"><h3>${esc(name)}</h3><div class="msg">Papildu informācija pašlaik nav pieejama.</div><a class="home" href="${esc(home)}" target="_blank" rel="noopener">Atvērt ${esc(name)} ↗</a></div>`;
+  return `<div class="source"><h3>${esc(name)}</h3><div class="msg">Avota meklēšana pašlaik neizdevās.</div><a class="home" href="${esc(home)}" target="_blank" rel="noopener">Atvērt ${esc(name)} ↗</a></div>`;
 }
 function renderSource(s,desc){
   const results = Array.isArray(s.results) ? s.results : [];
-  const list = results.length ? `<ul>${results.slice(0,3).map(r =>
-    `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title || 'Atvērt rezultātu')}</a></li>`
-  ).join('')}</ul>` : '';
+  const cards = results.length ? `<div class="sourceResults">${results.slice(0,3).map(r => `
+    <div class="sourceResult">
+      <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title || 'Atvērt rezultātu')}</a>
+      ${r.content ? `<p>${esc(r.content)}</p>` : ''}
+    </div>`).join('')}</div>` : '';
+
   const message = s.status === 'ok' ? '' : (s.message || 'Papildu informācija pašlaik nav pieejama.');
+
   return `<div class="source">
     <h3>${esc(s.name)}</h3>
     ${message ? `<div class="msg">${esc(message)}</div>` : ''}
     <p class="muted">${esc(desc)}</p>
-    ${list}
+    ${cards}
     <a class="home" href="${esc(s.home)}" target="_blank" rel="noopener">Atvērt ${esc(s.name)} ↗</a>
   </div>`;
 }
 
-// Important: all manual fields are intentionally empty on initial load.
+// Keep all fields empty on initial load.
 window.addEventListener('DOMContentLoaded', () => {
   for(const id of ['listingUrl','make','model','year','engine','fuel','power','gearbox','mileage','price']){
     setField(id,'');
